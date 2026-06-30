@@ -1,15 +1,19 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Outlet } from 'react-router-dom'
-import { LayoutGroup } from 'framer-motion'
+import { Outlet, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import BottomNav from './BottomNav'
 import AddSheet from './AddSheet'
-import BuddyCat from './BuddyCat'
+import BuddyCat, { ROUTE_CONTEXT } from './BuddyCat'
 import { SheetsContext } from './SheetsContext'
+import { useApp } from '../store/store'
 import type { Movement } from '../data/types'
 
 export default function Layout() {
   const [addOpen, setAddOpen] = useState(false)
   const [edit, setEdit] = useState<Movement | null>(null)
+  const { profile } = useApp()
+  const loc = useLocation()
+  const context = ROUTE_CONTEXT[loc.pathname]
 
   const openAdd = useCallback((m?: Movement | null) => {
     setEdit(m ?? null)
@@ -20,21 +24,26 @@ export default function Layout() {
 
   return (
     <SheetsContext.Provider value={value}>
-      <LayoutGroup>
-        <div className="app">
-          <Outlet />
-          <BuddyCat />
-          <BottomNav onAdd={() => openAdd(null)} addOpen={addOpen} />
-          <AddSheet
-            open={addOpen}
-            edit={edit}
-            onClose={() => {
-              setAddOpen(false)
-              setEdit(null)
-            }}
-          />
-        </div>
-      </LayoutGroup>
+      <div className="app">
+        <Outlet />
+
+        {/* El gatito de la barra: entra/sale deslizando por el costado */}
+        <AnimatePresence>
+          {context && profile.catPresence !== 'low' && (
+            <BuddyCat key="buddy" context={context} />
+          )}
+        </AnimatePresence>
+
+        <BottomNav onAdd={() => openAdd(null)} addOpen={addOpen} />
+        <AddSheet
+          open={addOpen}
+          edit={edit}
+          onClose={() => {
+            setAddOpen(false)
+            setEdit(null)
+          }}
+        />
+      </div>
     </SheetsContext.Provider>
   )
 }

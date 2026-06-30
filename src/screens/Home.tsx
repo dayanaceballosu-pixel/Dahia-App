@@ -60,7 +60,11 @@ export default function Home() {
       <section className="balancecard">
         <div className="balancecard__cat">
           <CatStage background={gamification.background} size={168}>
-            <motion.div layoutId="catbuddy" transition={BUDDY_SPRING}>
+            <motion.div
+              initial={{ x: 120, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={BUDDY_SPRING}
+            >
               <Cat
                 size={132}
                 mood={mood}
