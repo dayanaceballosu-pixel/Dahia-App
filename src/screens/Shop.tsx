@@ -167,13 +167,9 @@ function PreviewSheet({
     <Sheet open={open} onClose={onClose} title={item ? `${item.emoji} ${item.name}` : undefined}>
       {item && (
         <div className="stack" style={{ alignItems: 'center', textAlign: 'center' }}>
-          <CatStage background={unlocked ? background : gamification.background} size={188}>
-            <Cat
-              size={150}
-              equipped={unlocked ? equipped : gamification.equipped}
-              skin={unlocked ? skin : gamification.skin}
-              alive
-            />
+          {/* SIEMPRE muestra cómo se vería con el ítem puesto (aunque esté bloqueado) */}
+          <CatStage background={background} size={188}>
+            <Cat size={150} equipped={equipped} skin={skin} alive />
           </CatStage>
 
           {unlocked ? (
@@ -197,6 +193,7 @@ function PreviewSheet({
             </>
           ) : (
             <div className="preview-locked">
+              <p className="screen-sub">👀 Así se le vería… ¡desbloquéalo!</p>
               <div className="preview-locked__big">🔒</div>
               <p>
                 Se desbloquea con una racha de <b>{item.unlockStreak} días</b> 🔥
