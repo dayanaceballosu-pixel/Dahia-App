@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import './cat.css'
 
 export type CatMood = 'idle' | 'happy' | 'sad' | 'celebrate' | 'sleep'
+export type CatContext = 'home' | 'accounts' | 'movements' | 'stats' | 'shop' | 'settings'
 
 interface SkinColors {
   body: string
@@ -18,34 +19,59 @@ const SKINS: Record<string, SkinColors> = {
   black: { body: '#6e6680', shade: '#5b5468', ear: '#4d4659', earIn: '#3c3647', belly: '#ada6bd' },
 }
 
-const TAP_PHRASES = [
-  '¡Hola, Dahia! 🌸',
-  '¿Ya registraste hoy? 💕',
-  '¡Miau! 🐾',
-  'Te quiero 💗',
-  '¡Vamos bien! ✨',
-  'Mímame 🥺',
+type Expression = 'open' | 'happy' | 'teary' | 'closed' | 'wide'
+
+/* ---- Reacciones al TOQUE (estilo Clippy: variadas y al azar) ---- */
+interface Reaction {
+  anim: string // clase -> cat--r-<anim>
+  expr?: Expression
+  fx: string[]
+  phrase: string
+  ms: number
+}
+const REACTIONS: Reaction[] = [
+  { anim: 'pounce',    expr: 'happy', fx: ['💗', '💕', '✨'], phrase: '¡miau! 🐾', ms: 700 },
+  { anim: 'spin',      expr: 'happy', fx: ['✨', '💫', '⭐'], phrase: '¡weee!', ms: 800 },
+  { anim: 'wiggle',    expr: 'happy', fx: ['🎵', '✨', '💗'], phrase: '♪ ~', ms: 900 },
+  { anim: 'surprised', expr: 'wide',  fx: ['❗'],             phrase: '¿¡!? ', ms: 700 },
+  { anim: 'purr',      expr: 'happy', fx: ['💗', '💗'],       phrase: 'rrronron~ 😻', ms: 1000 },
+  { anim: 'think',     expr: 'open',  fx: ['💡'],             phrase: 'mmm… 🤔', ms: 1000 },
+  { anim: 'flip',      expr: 'happy', fx: ['⭐', '✨'],       phrase: '¡ta-da! 🤸', ms: 800 },
+  { anim: 'hearts',    expr: 'happy', fx: ['💖', '💗', '💕', '💞'], phrase: 'te quiero 💗', ms: 1000 },
+  { anim: 'shy',       expr: 'closed', fx: ['💕'],            phrase: 'ay… 😳', ms: 1000 },
+  { anim: 'jump',      expr: 'wide',  fx: ['‼️', '✨'],        phrase: '¡hola! 👋', ms: 700 },
 ]
 
-const IDLE_ACTIONS = ['none', 'none', 'sleep', 'stretch', 'look'] as const
+/* ---- Travesuras ociosas (rotan solas) ---- */
+const IDLE_ACTIONS = ['none', 'none', 'sleep', 'stretch', 'chase', 'yarn', 'peek', 'look'] as const
 type IdleAction = (typeof IDLE_ACTIONS)[number]
+
+/* ---- Decoración contextual por pantalla ---- */
+const CONTEXT_DECOR: Record<CatContext, string | null> = {
+  home: null,
+  accounts: '🐷',
+  movements: '📋',
+  stats: '📊',
+  shop: '🛍️',
+  settings: '🔧',
+}
 
 interface CatProps {
   size?: number
   mood?: CatMood
   equipped?: string[]
   skin?: string
-  /** frase controlada desde afuera (si se pasa, manda sobre la del toque) */
   speech?: string | null
   onTap?: () => void
-  /** activar comportamientos ociosos (default true) */
   alive?: boolean
+  context?: CatContext
 }
 
 interface Fx {
   id: number
   emoji: string
   dx: number
+  dy: number
 }
 
 export default function Cat({
@@ -56,14 +82,16 @@ export default function Cat({
   speech = null,
   onTap,
   alive = true,
+  context,
 }: CatProps) {
   const c = SKINS[skin] ?? SKINS.pink
-  const [tap, setTap] = useState(false)
+  const [reaction, setReaction] = useState<Reaction | null>(null)
   const [idle, setIdle] = useState<IdleAction>('none')
   const [fx, setFx] = useState<Fx[]>([])
   const [bubble, setBubble] = useState<string | null>(null)
   const fxId = useRef(0)
   const bubbleTimer = useRef<number | undefined>(undefined)
+  const reactTimer = useRef<number | undefined>(undefined)
 
   /* rotación de travesuras ociosas */
   useEffect(() => {
@@ -75,14 +103,14 @@ export default function Cat({
     const loop = () => {
       const next = IDLE_ACTIONS[Math.floor(Math.random() * IDLE_ACTIONS.length)]
       setIdle(next)
-      const dur = next === 'sleep' ? 5200 : next === 'none' ? 4200 : 2000
+      const dur = next === 'sleep' ? 5200 : next === 'none' ? 4200 : 2400
       t = window.setTimeout(loop, dur)
     }
     t = window.setTimeout(loop, 3500)
     return () => window.clearTimeout(t)
   }, [alive, mood])
 
-  /* celebrar lanza estrellitas */
+  /* celebrar/feliz lanzan partículas */
   useEffect(() => {
     if (mood === 'celebrate') spawn(['⭐', '🎉', '💖', '✨'])
     if (mood === 'happy') spawn(['💚', '🪙', '✨'])
@@ -90,33 +118,36 @@ export default function Cat({
   }, [mood])
 
   const spawn = useCallback((emojis: string[]) => {
-    const items = emojis.map((emoji) => ({
+    const items = emojis.map((emoji, i) => ({
       id: fxId.current++,
       emoji,
-      dx: Math.round((Math.random() - 0.5) * 70),
+      dx: Math.round((i - (emojis.length - 1) / 2) * 26 + (Math.random() - 0.5) * 16),
+      dy: Math.round((Math.random() - 0.5) * 16),
     }))
     setFx((f) => [...f, ...items])
     items.forEach((it) => {
-      window.setTimeout(() => setFx((f) => f.filter((x) => x.id !== it.id)), 1200)
+      window.setTimeout(() => setFx((f) => f.filter((x) => x.id !== it.id)), 1150)
     })
   }, [])
 
   const handleTap = useCallback(() => {
-    setTap(true)
-    window.setTimeout(() => setTap(false), 520)
-    spawn(['💗', '💕', '✨'])
+    const r = REACTIONS[Math.floor(Math.random() * REACTIONS.length)]
+    setReaction(r)
+    spawn(r.fx)
+    window.clearTimeout(reactTimer.current)
+    reactTimer.current = window.setTimeout(() => setReaction(null), r.ms)
     if (!speech) {
-      const phrase = TAP_PHRASES[Math.floor(Math.random() * TAP_PHRASES.length)]
-      setBubble(phrase)
+      setBubble(r.phrase)
       window.clearTimeout(bubbleTimer.current)
-      bubbleTimer.current = window.setTimeout(() => setBubble(null), 1800)
+      bubbleTimer.current = window.setTimeout(() => setBubble(null), 1600)
     }
     onTap?.()
   }, [onTap, spawn, speech])
 
   const sleeping = mood === 'sleep' || idle === 'sleep'
-  const expression: 'open' | 'happy' | 'teary' | 'closed' =
-    mood === 'happy' || mood === 'celebrate'
+  const expression: Expression = reaction?.expr
+    ? reaction.expr
+    : mood === 'happy' || mood === 'celebrate'
       ? 'happy'
       : mood === 'sad'
         ? 'teary'
@@ -126,30 +157,32 @@ export default function Cat({
 
   const cls = [
     'cat',
-    tap && 'cat--tap',
-    mood === 'celebrate' && 'cat--celebrate',
-    idle === 'stretch' && 'cat--stretch',
+    reaction && `cat--r-${reaction.anim}`,
+    mood === 'celebrate' && 'cat--r-hearts',
+    !reaction && idle !== 'none' && idle !== 'look' && `cat--i-${idle}`,
   ]
     .filter(Boolean)
     .join(' ')
 
   const shownBubble = speech ?? bubble
+  const decor = context ? CONTEXT_DECOR[context] : null
 
   return (
-    <div
-      className={cls}
-      style={{ width: size }}
-      onClick={handleTap}
-      role="button"
-      aria-label="Gatito"
-    >
-      {shownBubble && <div className="cat__bubble">{shownBubble}</div>}
+    <button type="button" className={cls} style={{ width: size }} onClick={handleTap} aria-label="Gatito">
+      {shownBubble && <span className="cat__bubble">{shownBubble}</span>}
 
       {fx.map((f) => (
-        <span key={f.id} className="cat__fx" style={{ marginLeft: f.dx }}>
+        <span key={f.id} className="cat__fx" style={{ left: `calc(50% + ${f.dx}px)`, top: `${28 + f.dy}%` }}>
           {f.emoji}
         </span>
       ))}
+
+      {/* decoración contextual (alcancía, gráfica, etc.) */}
+      {decor && <span className="cat__decor">{decor}</span>}
+      {/* bolita de estambre (idle) */}
+      {idle === 'yarn' && !reaction && <span className="cat__yarn">🧶</span>}
+      {/* bombillo (reacción pensar) */}
+      {reaction?.anim === 'think' && <span className="cat__bulb">💡</span>}
 
       <svg viewBox="0 0 240 240" width={size} xmlns="http://www.w3.org/2000/svg">
         <g className="cat__body">
@@ -193,6 +226,16 @@ export default function Cat({
               <ellipse cx="142" cy="112" rx="9" ry="12" fill="#4a3b46" />
               <circle cx="101" cy="108" r="3" fill="#fff" />
               <circle cx="145" cy="108" r="3" fill="#fff" />
+            </g>
+          )}
+          {expression === 'wide' && (
+            <g>
+              <circle cx="98" cy="112" r="13" fill="#fff" stroke="#4a3b46" strokeWidth="2.5" />
+              <circle cx="142" cy="112" r="13" fill="#fff" stroke="#4a3b46" strokeWidth="2.5" />
+              <circle cx="98" cy="113" r="7" fill="#4a3b46" />
+              <circle cx="142" cy="113" r="7" fill="#4a3b46" />
+              <circle cx="100" cy="110" r="2.5" fill="#fff" />
+              <circle cx="144" cy="110" r="2.5" fill="#fff" />
             </g>
           )}
           {expression === 'happy' && (
@@ -308,6 +351,6 @@ export default function Cat({
           </text>
         )}
       </svg>
-    </div>
+    </button>
   )
 }

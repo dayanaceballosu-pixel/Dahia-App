@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store/store'
 import Money from '../components/Money'
+import ScreenCat from '../components/ScreenCat'
 import { categoryStats, periodTotals } from '../data/selectors'
 import { periodRange } from '../lib/date'
 import './Stats.css'
@@ -120,6 +121,7 @@ export default function Stats() {
           })}
         </div>
       )}
+      <ScreenCat context="stats" />
     </main>
   )
 }

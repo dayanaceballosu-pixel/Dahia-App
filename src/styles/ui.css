@@ -192,3 +192,16 @@
   box-shadow: var(--shadow-sm); transition: transform 0.12s ease;
 }
 .iconbtn:active { transform: scale(0.9); }
+
+/* Gatito que se asoma en la esquina (pantallas secundarias) */
+.screencat {
+  position: fixed;
+  right: 10px;
+  bottom: calc(var(--nav-h) + var(--safe-bottom) - 14px);
+  z-index: 35;
+  pointer-events: auto;
+  filter: drop-shadow(0 8px 14px rgba(214, 51, 132, 0.28));
+}
+@media (min-width: 480px) {
+  .screencat { right: calc(50vw - 230px + 10px); }
+}

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store/store'
 import MovementRow from '../components/MovementRow'
+import ScreenCat from '../components/ScreenCat'
 import { useSheets } from '../components/SheetsContext'
 import { sortedDesc } from '../data/selectors'
 import { relativeDay, localDayKey } from '../lib/date'
@@ -101,6 +102,7 @@ export default function Movements() {
           ))}
         </div>
       )}
+      <ScreenCat context="movements" />
     </main>
   )
 }
