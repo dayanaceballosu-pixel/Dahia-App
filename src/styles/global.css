@@ -149,7 +149,7 @@ img, svg { display: block; max-width: 100%; }
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
-/* ---------- Reduce motion ---------- */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
-}
+/* Nota: a propósito NO desactivamos las animaciones con prefers-reduced-motion.
+   El gatito y la vida de la app son su esencia; en iOS "Reducir movimiento"
+   las apagaba todas (el gato no se movía). Si en el futuro se quiere respetar,
+   hacerlo de forma selectiva (transiciones de página), nunca al gato. */

@@ -230,9 +230,3 @@
 
 /* aparición de accesorio */
 .cat__acc { transform-box: fill-box; transform-origin: center; }
-
-/* ===== respeto a "reducir movimiento": NO ocultar las partículas ===== */
-@media (prefers-reduced-motion: reduce) {
-  .cat__fx { animation: none !important; opacity: 1 !important; }
-  .cat__bubble { animation: none !important; }
-}
