@@ -12,6 +12,7 @@ import Shop from './screens/Shop'
 import Stats from './screens/Stats'
 import Onboarding from './screens/Onboarding'
 import Login from './screens/Login'
+import NotFound from './screens/NotFound'
 import InstallPrompt from './components/InstallPrompt'
 import Cat from './components/Cat/Cat'
 import './styles/ui.css'
@@ -91,8 +92,8 @@ function ThemedApp() {
             <Route path="/ajustes" element={<Settings />} />
             <Route path="/tienda" element={<Shop />} />
             <Route path="/estadisticas" element={<Stats />} />
-            <Route path="*" element={<Home />} />
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Routes>
       )}
       <InstallPrompt />
