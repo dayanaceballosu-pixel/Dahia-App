@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useApp } from '../store/store'
 import Cat, { type CatMood } from '../components/Cat/Cat'
 import CatStage from '../components/Cat/CatStage'
+import { BUDDY_SPRING } from '../components/BuddyCat'
 import Money from '../components/Money'
 import MovementRow from '../components/MovementRow'
 import { useSheets } from '../components/SheetsContext'
@@ -54,12 +56,14 @@ export default function Home() {
       <section className="balancecard">
         <div className="balancecard__cat">
           <CatStage background={gamification.background} size={168}>
-            <Cat
-              size={132}
-              mood={mood}
-              equipped={gamification.equipped}
-              skin={gamification.skin}
-            />
+            <motion.div layoutId="catbuddy" transition={BUDDY_SPRING}>
+              <Cat
+                size={132}
+                mood={mood}
+                equipped={gamification.equipped}
+                skin={gamification.skin}
+              />
+            </motion.div>
           </CatStage>
         </div>
         <div className="balancecard__label">

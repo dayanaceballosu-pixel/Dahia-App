@@ -65,10 +65,12 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
 
   const cents = parseAmountToCents(amountRaw)
   const meta = TYPE_META[type]
+  const needsCategory = type === 'income' || type === 'expense'
 
   const canSave =
     cents > 0 &&
     !!accountId &&
+    (!needsCategory || !!categoryId) &&
     (type !== 'transfer' || (!!toAccountId && toAccountId !== accountId))
 
   function pickType(t: MovementType) {
@@ -199,10 +201,10 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
                 </div>
               )}
 
-              {/* Categoría (ingreso/gasto) */}
+              {/* Categoría (ingreso/gasto) — obligatoria */}
               {(type === 'income' || type === 'expense') && (
                 <div className="field">
-                  <label>Categoría</label>
+                  <label>Categoría *</label>
                   <CategoryPicker
                     categories={categories}
                     value={categoryId}

@@ -212,8 +212,9 @@
   filter: drop-shadow(0 8px 14px rgba(214, 51, 132, 0.3));
   will-change: transform;
 }
-/* camina de lado a lado, hace pausas, se escapa por el borde y vuelve */
-.screencat--wander { animation: cat-walk 24s ease-in-out infinite; }
+/* la caminata va en una capa interna (la externa la controla la transición) */
+.screencat__walk { display: inline-block; }
+.screencat__walk--on { animation: cat-walk 24s ease-in-out infinite; }
 @keyframes cat-walk {
   0%, 5%   { transform: translateX(0); }       /* a la derecha */
   28%      { transform: translateX(-72vw); }   /* caminó a la izquierda */

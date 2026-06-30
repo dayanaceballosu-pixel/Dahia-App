@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store/store'
-import ScreenCat from '../components/ScreenCat'
 import type { ThemePref } from '../data/types'
 
 const THEMES: { value: ThemePref; label: string; emoji: string }[] = [
@@ -120,7 +119,6 @@ export default function Settings() {
       <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-faint)', marginTop: 4 }}>
         Dahia App · hecha con 💗
       </p>
-      <ScreenCat context="settings" />
     </main>
   )
 }

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../store/store'
 import Money from '../components/Money'
 import Sheet from '../components/ui/Sheet'
-import ScreenCat from '../components/ScreenCat'
 import { allBalances } from '../data/selectors'
 import { PALETTE } from '../data/seed'
 import { lastEmoji } from '../lib/emoji'
@@ -135,8 +134,6 @@ export default function Accounts() {
             : undefined
         }
       />
-
-      <ScreenCat context="accounts" />
     </main>
   )
 }
