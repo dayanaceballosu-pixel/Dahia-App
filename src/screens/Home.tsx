@@ -35,7 +35,11 @@ export default function Home() {
       return
     }
     setMood('celebrate')
-    flashToast(`🎁 +${r.reward} Michi-coins · racha de ${r.streak} 🔥`)
+    if (r.unlocked.length) {
+      flashToast(`🔥 ¡Racha de ${r.streak}! Desbloqueaste: ${r.unlocked.join(', ')} 🎉`)
+    } else {
+      flashToast(`🔥 ¡Racha de ${r.streak} ${r.streak === 1 ? 'día' : 'días'}!`)
+    }
     window.setTimeout(() => setMood('idle'), 1800)
   }
 
@@ -47,8 +51,8 @@ export default function Home() {
           <p className="home__hi">¡Hola, {profile.userName}! 🌸</p>
           <p className="screen-sub">Tus cuentas, bonitas y al día</p>
         </div>
-        <button className="coinpill tap" title="Ir a la tienda" onClick={() => navigate('/tienda')}>
-          🪙 <b>{gamification.coins}</b>
+        <button className="streakpill tap" title="Tienda y racha" onClick={() => navigate('/tienda')}>
+          🔥 <b>{gamification.streak}</b>
         </button>
       </header>
 
@@ -91,10 +95,10 @@ export default function Home() {
         <button className="dailycard" onClick={onClaim}>
           <span className="dailycard__flame">🔥</span>
           <span className="grow">
-            <b>¡Entra y gana!</b>
-            <span className="dailycard__sub">Reclama tus Michi-coins de hoy</span>
+            <b>¡Entra y suma!</b>
+            <span className="dailycard__sub">Mantén tu racha y desbloquea cosas 🔥</span>
           </span>
-          <span className="dailycard__cta">Reclamar</span>
+          <span className="dailycard__cta">Sumar</span>
         </button>
       )}
 

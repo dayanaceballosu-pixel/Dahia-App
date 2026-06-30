@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store/store'
 import Cat from '../components/Cat/Cat'
 import CatStage from '../components/Cat/CatStage'
+import Sheet from '../components/ui/Sheet'
 import {
   SHOP_ITEMS,
   FREE_DEFAULTS,
@@ -22,72 +23,29 @@ const TABS: { kind: ItemKind; label: string; emoji: string }[] = [
 const MES = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
 export default function Shop() {
-  const { gamification, buyItem, toggleEquip, selectSkin, selectBackground } = useApp()
+  const { gamification, toggleEquip, selectSkin, selectBackground } = useApp()
   const navigate = useNavigate()
   const [tab, setTab] = useState<ItemKind>('accessory')
-  const [toast, setToast] = useState<string | null>(null)
+  const [preview, setPreview] = useState<ShopItem | null>(null)
   const month = new Date().getMonth() + 1
+  const best = gamification.bestStreak ?? 0
 
-  const items = useMemo(
-    () => SHOP_ITEMS.filter((i) => i.kind === tab),
-    [tab],
-  )
+  const items = useMemo(() => SHOP_ITEMS.filter((i) => i.kind === tab), [tab])
 
-  function flash(msg: string) {
-    setToast(msg)
-    window.setTimeout(() => setToast(null), 1900)
+  function unlocked(item: ShopItem) {
+    return isUnlocked(item, gamification, month)
   }
-
-  function owned(id: string) {
-    return gamification.owned.includes(id) || FREE_DEFAULTS.includes(id)
-  }
-
-  function onTap(item: ShopItem) {
-    const unlocked = isUnlocked(item, gamification)
-    const seasonOk = inSeason(item, month)
-
-    if (!seasonOk) {
-      flash(`Disponible en ${MES[item.seasonal![0]]} 🎄`)
-      return
-    }
-    if (!unlocked) {
-      flash(`🔒 ${item.unlock!.label}`)
-      return
-    }
-
-    // ya lo tiene
-    if (owned(item.id)) {
-      if (item.kind === 'accessory') {
-        toggleEquip(item.id)
-      } else if (item.kind === 'skin') {
-        selectSkin(item.id)
-        flash('¡Skin aplicado! 🐱')
-      } else {
-        selectBackground(item.id)
-        flash('¡Fondo aplicado! 🖼️')
-      }
-      return
-    }
-
-    // comprar
-    const ok = buyItem(item)
-    if (!ok) flash('Te faltan Michi-coins 🥲')
-    else flash(`¡Compraste ${item.name}! 🎉`)
+  function active(item: ShopItem) {
+    if (item.kind === 'accessory') return gamification.equipped.includes(item.id)
+    if (item.kind === 'skin') return gamification.skin === item.id
+    return gamification.background === item.id
   }
 
   function statusLabel(item: ShopItem): { text: string; cls: string } {
     if (!inSeason(item, month)) return { text: `🎄 ${MES[item.seasonal![0]]}`, cls: 'locked' }
-    if (!isUnlocked(item, gamification)) return { text: `🔒 ${item.unlock!.value} días`, cls: 'locked' }
-    if (owned(item.id)) {
-      if (item.kind === 'accessory') {
-        return gamification.equipped.includes(item.id)
-          ? { text: '✓ puesto', cls: 'on' }
-          : { text: 'guardado', cls: 'have' }
-      }
-      const active = item.kind === 'skin' ? gamification.skin === item.id : gamification.background === item.id
-      return active ? { text: '✓ activo', cls: 'on' } : { text: 'usar', cls: 'have' }
-    }
-    return { text: `🪙 ${item.price}`, cls: 'price' }
+    if (!unlocked(item)) return { text: `🔒 ${item.unlockStreak} días`, cls: 'locked' }
+    if (active(item)) return { text: '✓ puesto', cls: 'on' }
+    return { text: 'tocar', cls: 'have' }
   }
 
   return (
@@ -98,12 +56,14 @@ export default function Shop() {
         </button>
         <div style={{ flex: 1 }}>
           <h1>Tienda 🛍️</h1>
-          <p className="screen-sub">Viste a tu michi</p>
+          <p className="screen-sub">Desbloquea entrando cada día 🔥</p>
         </div>
-        <span className="coinpill">🪙 <b>{gamification.coins}</b></span>
+        <span className="streakpill" title="Racha máxima">
+          🔥 <b>{best}</b>
+        </span>
       </div>
 
-      {/* Vista previa */}
+      {/* Vista previa del outfit actual */}
       <div className="shop-preview">
         <CatStage background={gamification.background} size={190}>
           <Cat size={150} equipped={gamification.equipped} skin={gamification.skin} alive />
@@ -128,7 +88,7 @@ export default function Shop() {
         {items.map((item) => {
           const st = statusLabel(item)
           return (
-            <button key={item.id} className={`shopitem shopitem--${st.cls}`} onClick={() => onTap(item)}>
+            <button key={item.id} className={`shopitem shopitem--${st.cls}`} onClick={() => setPreview(item)}>
               <span className="shopitem__emoji">{item.emoji}</span>
               <span className="shopitem__name">{item.name}</span>
               <span className={`shopitem__status status--${st.cls}`}>{st.text}</span>
@@ -138,10 +98,117 @@ export default function Shop() {
       </div>
 
       <p className="shop-foot">
-        Gana Michi-coins entrando cada día 🔥 y registrando tus movimientos.
+        Cada día que entras sube tu racha 🔥 y desbloqueas cosas nuevas para tu michi.
+        ¡Y quedan tuyas para siempre!
       </p>
 
-      {toast && <div className="toast-pop">{toast}</div>}
+      <PreviewSheet
+        item={preview}
+        gamification={gamification}
+        month={month}
+        onClose={() => setPreview(null)}
+        onToggleAccessory={(id) => toggleEquip(id)}
+        onSelectSkin={(id) => selectSkin(id)}
+        onSelectBackground={(id) => selectBackground(id)}
+      />
     </main>
+  )
+}
+
+/* ---------- Hoja de vista previa + confirmación ---------- */
+function PreviewSheet({
+  item,
+  gamification,
+  month,
+  onClose,
+  onToggleAccessory,
+  onSelectSkin,
+  onSelectBackground,
+}: {
+  item: ShopItem | null
+  gamification: ReturnType<typeof useApp>['gamification']
+  month: number
+  onClose: () => void
+  onToggleAccessory: (id: string) => void
+  onSelectSkin: (id: string) => void
+  onSelectBackground: (id: string) => void
+}) {
+  const open = !!item
+  const unlocked = item
+    ? FREE_DEFAULTS.includes(item.id) || isUnlocked(item, gamification, month)
+    : false
+  const best = gamification.bestStreak ?? 0
+
+  // outfit de la vista previa (con el ítem puesto, para que se vea cómo queda)
+  const equipped = item
+    ? item.kind === 'accessory'
+      ? Array.from(new Set([...gamification.equipped, item.id]))
+      : gamification.equipped
+    : gamification.equipped
+  const skin = item && item.kind === 'skin' ? item.id : gamification.skin
+  const background = item && item.kind === 'background' ? item.id : gamification.background
+
+  const isActive =
+    item &&
+    (item.kind === 'accessory'
+      ? gamification.equipped.includes(item.id)
+      : item.kind === 'skin'
+        ? gamification.skin === item.id
+        : gamification.background === item.id)
+
+  function action() {
+    if (!item) return
+    if (item.kind === 'accessory') onToggleAccessory(item.id)
+    else if (item.kind === 'skin') onSelectSkin(item.id)
+    else onSelectBackground(item.id)
+  }
+
+  return (
+    <Sheet open={open} onClose={onClose} title={item ? `${item.emoji} ${item.name}` : undefined}>
+      {item && (
+        <div className="stack" style={{ alignItems: 'center', textAlign: 'center' }}>
+          <CatStage background={unlocked ? background : gamification.background} size={188}>
+            <Cat
+              size={150}
+              equipped={unlocked ? equipped : gamification.equipped}
+              skin={unlocked ? skin : gamification.skin}
+              alive
+            />
+          </CatStage>
+
+          {unlocked ? (
+            <>
+              <p className="screen-sub">Así se le ve a tu michi 🐱</p>
+              <button
+                className={`btn ${isActive ? 'btn--ghost' : 'btn--primary'} btn--block`}
+                onClick={() => {
+                  action()
+                  if (!isActive && item.kind !== 'accessory') onClose()
+                }}
+              >
+                {item.kind === 'accessory'
+                  ? isActive
+                    ? 'Quitar'
+                    : 'Ponérselo'
+                  : isActive
+                    ? '✓ En uso'
+                    : 'Usar este'}
+              </button>
+            </>
+          ) : (
+            <div className="preview-locked">
+              <div className="preview-locked__big">🔒</div>
+              <p>
+                Se desbloquea con una racha de <b>{item.unlockStreak} días</b> 🔥
+              </p>
+              <p className="screen-sub">
+                Tu mejor racha es de <b>{best}</b> {best === 1 ? 'día' : 'días'}. ¡Te faltan{' '}
+                <b>{Math.max(0, item.unlockStreak - best)}</b>! Entra cada día para lograrlo 💪
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </Sheet>
   )
 }

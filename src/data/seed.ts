@@ -62,14 +62,12 @@ export function defaultProfile(): Profile {
 
 export function defaultGamification(): Gamification {
   return {
-    coins: 0,
     streak: 0,
+    bestStreak: 0,
     lastClaimDate: null,
-    owned: [],
     equipped: [],
     skin: 'pink',
     background: 'none',
-    unlocked: [],
   }
 }
 

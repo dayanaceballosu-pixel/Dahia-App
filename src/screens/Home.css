@@ -15,6 +15,21 @@
 .coinpill b { color: #d98a14; }
 :root[data-theme="dark"] .coinpill b { color: var(--gold); }
 
+/* Píldora de racha 🔥 */
+.streakpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  background: linear-gradient(135deg, var(--gold-soft), var(--primary-tint));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  font-weight: 700;
+}
+.streakpill b { color: var(--primary-strong); }
+
 .home__link { color: var(--primary-strong); font-weight: 800; font-size: 14px; }
 
 /* Tarjeta de saldo */

@@ -55,14 +55,15 @@ export interface Movement {
 }
 
 export interface Gamification {
-  coins: number
-  streak: number
+  streak: number                 // racha actual (días seguidos entrando)
+  bestStreak: number             // racha máxima alcanzada → desbloquea ítems para siempre
   lastClaimDate: string | null   // 'YYYY-MM-DD' local
-  owned: string[]                // ids de ítems comprados
-  equipped: string[]             // ids de ítems puestos (varios a la vez)
+  equipped: string[]             // accesorios puestos (varios a la vez)
   skin: string                   // id del skin del gato
   background: string             // id del fondo
-  unlocked: string[]             // ítems desbloqueados por logros
+  coins?: number                 // (obsoleto) se mantiene por compatibilidad
+  owned?: string[]               // (obsoleto)
+  unlocked?: string[]            // (obsoleto)
 }
 
 export interface DataSnapshot {

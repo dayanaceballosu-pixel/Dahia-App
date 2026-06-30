@@ -21,15 +21,9 @@ import type {
   Profile,
 } from '../data/types'
 import { emptySnapshot } from '../data/seed'
-import { FREE_DEFAULTS, type ShopItem } from '../data/shop'
+import { FREE_DEFAULTS, isUnlocked, itemById, inSeason, SHOP_ITEMS } from '../data/shop'
 import { uid } from '../lib/id'
 import { localDayKey, daysBetween } from '../lib/date'
-
-/* ---- Reglas de gamificación ---- */
-const COINS_PER_MOVEMENT = 2
-function dailyReward(streak: number) {
-  return 10 + streak * 5
-}
 
 export interface NewMovementInput {
   type: MovementType
@@ -44,8 +38,8 @@ export interface NewMovementInput {
 
 export interface ClaimResult {
   already: boolean
-  reward: number
   streak: number
+  unlocked: string[] // nombres de ítems recién desbloqueados hoy
 }
 
 interface AppContextValue {
@@ -75,10 +69,9 @@ interface AppContextValue {
   updateMovement: (movement: Movement) => void
   deleteMovement: (id: ID) => void
 
-  // gamificación
+  // gamificación (por racha)
   claimDaily: () => ClaimResult
   saveGamification: (g: Gamification) => void
-  buyItem: (item: ShopItem) => boolean
   toggleEquip: (id: string) => void
   selectSkin: (id: string) => void
   selectBackground: (id: string) => void
@@ -227,16 +220,6 @@ export function AppProvider({
     [provider],
   )
 
-  /* -------- gamificación interna -------- */
-  const awardCoins = useCallback(
-    (s: DataSnapshot, amount: number): Gamification => {
-      const g = { ...s.gamification, coins: s.gamification.coins + amount }
-      provider.saveGamification(g)
-      return g
-    },
-    [provider],
-  )
-
   /* -------- movimientos -------- */
   const addMovement = useCallback(
     (input: NewMovementInput) => {
@@ -254,12 +237,11 @@ export function AppProvider({
       }
       setSnap((s) => {
         provider.upsertMovement(movement)
-        const gamification = awardCoins(s, COINS_PER_MOVEMENT)
-        return { ...s, movements: [...s.movements, movement], gamification }
+        return { ...s, movements: [...s.movements, movement] }
       })
       return movement
     },
-    [provider, awardCoins],
+    [provider],
   )
 
   const updateMovement = useCallback(
@@ -290,7 +272,7 @@ export function AppProvider({
     const today = localDayKey()
     const g = snap.gamification
     if (g.lastClaimDate === today) {
-      return { already: true, reward: 0, streak: g.streak }
+      return { already: true, streak: g.streak, unlocked: [] }
     }
     let streak: number
     if (g.lastClaimDate && daysBetween(g.lastClaimDate, today) === 1) {
@@ -298,18 +280,20 @@ export function AppProvider({
     } else {
       streak = 1 // primera vez o se rompió la racha
     }
-    const reward = dailyReward(streak)
-    const next: Gamification = {
-      ...g,
-      coins: g.coins + reward,
-      streak,
-      lastClaimDate: today,
-    }
+    const prevBest = g.bestStreak ?? 0
+    const bestStreak = Math.max(prevBest, streak)
+    const month = new Date().getMonth() + 1
+    // ítems que se desbloquean justo al subir la racha máxima
+    const unlocked = SHOP_ITEMS.filter(
+      (it) => it.unlockStreak > prevBest && it.unlockStreak <= bestStreak && inSeason(it, month),
+    ).map((it) => it.name)
+
+    const next: Gamification = { ...g, streak, bestStreak, lastClaimDate: today }
     setSnap((s) => {
       provider.saveGamification(next)
       return { ...s, gamification: next }
     })
-    return { already: false, reward, streak }
+    return { already: false, streak, unlocked }
   }, [snap.gamification, provider])
 
   const saveGamification = useCallback(
@@ -332,57 +316,43 @@ export function AppProvider({
     [provider],
   )
 
-  const buyItem = useCallback(
-    (item: ShopItem): boolean => {
-      const g = snap.gamification
-      const owned = g.owned.includes(item.id) || FREE_DEFAULTS.includes(item.id)
-      // si no es gratis ni desbloqueado y no alcanza → no compra
-      const free = item.price === 0
-      if (!owned && !free && g.coins < item.price) return false
-
-      const newOwned = g.owned.includes(item.id) ? g.owned : [...g.owned, item.id]
-      const coins = owned || free ? g.coins : g.coins - item.price
-      let equipped = g.equipped
-      let skin = g.skin
-      let background = g.background
-      if (item.kind === 'accessory' && !equipped.includes(item.id)) equipped = [...equipped, item.id]
-      if (item.kind === 'skin') skin = item.id
-      if (item.kind === 'background') background = item.id
-
-      commitGamification({ ...g, owned: newOwned, coins, equipped, skin, background })
-      return true
+  // ¿Se puede usar este ítem? = desbloqueado por la racha (o gratis por defecto).
+  const isUsable = useCallback(
+    (id: string): boolean => {
+      if (FREE_DEFAULTS.includes(id)) return true
+      const item = itemById(id)
+      if (!item) return false
+      return isUnlocked(item, snap.gamification, new Date().getMonth() + 1)
     },
-    [snap.gamification, commitGamification],
+    [snap.gamification],
   )
 
   const toggleEquip = useCallback(
     (id: string) => {
+      if (!isUsable(id)) return
       const g = snap.gamification
-      if (!g.owned.includes(id)) return
       const equipped = g.equipped.includes(id)
         ? g.equipped.filter((x) => x !== id)
         : [...g.equipped, id]
       commitGamification({ ...g, equipped })
     },
-    [snap.gamification, commitGamification],
+    [snap.gamification, commitGamification, isUsable],
   )
 
   const selectSkin = useCallback(
     (id: string) => {
-      const g = snap.gamification
-      if (!g.owned.includes(id) && !FREE_DEFAULTS.includes(id)) return
-      commitGamification({ ...g, skin: id })
+      if (!isUsable(id)) return
+      commitGamification({ ...snap.gamification, skin: id })
     },
-    [snap.gamification, commitGamification],
+    [snap.gamification, commitGamification, isUsable],
   )
 
   const selectBackground = useCallback(
     (id: string) => {
-      const g = snap.gamification
-      if (!g.owned.includes(id) && !FREE_DEFAULTS.includes(id)) return
-      commitGamification({ ...g, background: id })
+      if (!isUsable(id)) return
+      commitGamification({ ...snap.gamification, background: id })
     },
-    [snap.gamification, commitGamification],
+    [snap.gamification, commitGamification, isUsable],
   )
 
   const resetAll = useCallback(() => {
@@ -411,7 +381,6 @@ export function AppProvider({
       deleteMovement,
       claimDaily,
       saveGamification,
-      buyItem,
       toggleEquip,
       selectSkin,
       selectBackground,
@@ -433,7 +402,6 @@ export function AppProvider({
       deleteMovement,
       claimDaily,
       saveGamification,
-      buyItem,
       toggleEquip,
       selectSkin,
       selectBackground,

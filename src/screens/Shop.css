@@ -40,3 +40,8 @@
   color: var(--text-faint);
   margin-top: 2px;
 }
+
+/* Bloque de ítem bloqueado en la vista previa */
+.preview-locked { text-align: center; padding: 2px 6px 6px; }
+.preview-locked__big { font-size: 38px; margin-bottom: 4px; }
+.preview-locked p { font-size: 14px; line-height: 1.45; margin-top: 4px; }

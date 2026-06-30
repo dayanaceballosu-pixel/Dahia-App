@@ -276,7 +276,7 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
         <div className="done">
           <Cat size={140} mood="celebrate" alive={false} />
           <h3>¡Guardado! 🎉</h3>
-          <p className="t-soft">+2 Michi-coins 🪙</p>
+          <p className="t-soft">Cuentas al día 💗</p>
         </div>
       )}
     </Sheet>

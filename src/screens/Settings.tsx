@@ -27,9 +27,9 @@ export default function Settings() {
           <span className="row__icon">🛍️</span>
           <span className="row__main">
             <span className="row__title">Tienda del michi</span>
-            <span className="row__sub">Accesorios, skins y fondos</span>
+            <span className="row__sub">Desbloquea con tu racha 🔥</span>
           </span>
-          <span className="coinpill">🪙 <b>{gamification.coins}</b></span>
+          <span className="streakpill">🔥 <b>{gamification.bestStreak ?? 0}</b></span>
         </button>
         <button className="row" onClick={() => navigate('/estadisticas')} style={{ width: '100%', textAlign: 'left' }}>
           <span className="row__icon">📊</span>
@@ -88,13 +88,16 @@ export default function Settings() {
         </div>
       </section>
 
-      {/* Monedas */}
+      {/* Racha */}
       <section className="card spread">
         <span className="grow">
-          <b style={{ fontSize: 14 }}>Michi-coins</b>
-          <p className="screen-sub">Racha actual: {gamification.streak} 🔥</p>
+          <b style={{ fontSize: 14 }}>Tu racha 🔥</b>
+          <p className="screen-sub">
+            Actual: {gamification.streak} {gamification.streak === 1 ? 'día' : 'días'} · récord:{' '}
+            {gamification.bestStreak ?? 0}
+          </p>
         </span>
-        <span className="coinpill">🪙 <b>{gamification.coins}</b></span>
+        <span className="streakpill">🔥 <b>{gamification.streak}</b></span>
       </section>
 
       {/* Datos */}
