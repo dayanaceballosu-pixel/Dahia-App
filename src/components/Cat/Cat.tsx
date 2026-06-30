@@ -342,6 +342,19 @@ export default function Cat({
               <circle cx="120" cy="50" r="3" fill="#ff5fa0" />
             </g>
           )}
+
+          {/* sombrero de paja (Luffy) */}
+          {equipped.includes('strawhat') && (
+            <g className="cat__acc">
+              {/* ala */}
+              <ellipse cx="120" cy="62" rx="66" ry="15" fill="#e8c873" stroke="#c9a64e" strokeWidth="2" />
+              <path d="M58 62 q62 11 124 0" fill="none" stroke="#caa84f" strokeWidth="1.5" opacity="0.6" />
+              {/* copa */}
+              <path d="M88 63 Q90 28 120 26 Q150 28 152 63 Z" fill="#f1d588" stroke="#c9a64e" strokeWidth="1.5" />
+              {/* banda roja */}
+              <path d="M88 57 Q120 49 152 57 L150 64 Q120 56 90 64 Z" fill="#d8463f" />
+            </g>
+          )}
         </g>
 
         {/* zzz al dormir */}

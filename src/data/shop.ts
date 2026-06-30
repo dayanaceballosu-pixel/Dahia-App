@@ -24,6 +24,7 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'scarf', name: 'Bufanda', emoji: '🧣', unlockStreak: 10, kind: 'accessory' },
   { id: 'hat', name: 'Gorrito', emoji: '🎉', unlockStreak: 14, kind: 'accessory' },
   { id: 'crown', name: 'Corona', emoji: '👑', unlockStreak: 21, kind: 'accessory' },
+  { id: 'strawhat', name: 'Sombrero de Luffy', emoji: '👒', unlockStreak: 30, kind: 'accessory' },
   { id: 'santa', name: 'Gorro navideño', emoji: '🎅', unlockStreak: 3, kind: 'accessory', seasonal: [12] },
 
   // Skins del gato
