@@ -202,15 +202,31 @@
 }
 .iconbtn:active { transform: scale(0.9); }
 
-/* Gatito que se asoma en la esquina (pantallas secundarias) */
+/* Gatito travieso por ENCIMA de la barra inferior (pantallas secundarias) */
 .screencat {
   position: fixed;
-  right: 10px;
-  bottom: calc(var(--nav-h) + var(--safe-bottom) - 14px);
-  z-index: 35;
+  right: 12px;
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + 2px);
+  z-index: 45; /* por encima de la barra (z-40) */
   pointer-events: auto;
-  filter: drop-shadow(0 8px 14px rgba(214, 51, 132, 0.28));
+  filter: drop-shadow(0 8px 14px rgba(214, 51, 132, 0.3));
+  will-change: transform;
+}
+/* camina de lado a lado, hace pausas, se escapa por el borde y vuelve */
+.screencat--wander { animation: cat-walk 24s ease-in-out infinite; }
+@keyframes cat-walk {
+  0%, 5%   { transform: translateX(0); }       /* a la derecha */
+  28%      { transform: translateX(-72vw); }   /* caminó a la izquierda */
+  34%      { transform: translateX(-72vw); }   /* pausa, mira */
+  56%      { transform: translateX(-34vw); }   /* camina a la derecha */
+  60%      { transform: translateX(-34vw); }   /* pausa */
+  70%      { transform: translateX(-52vw); }   /* travieso: se devuelve un poco */
+  74%      { transform: translateX(-52vw); }
+  88%      { transform: translateX(0); }        /* vuelve a la derecha */
+  90%      { transform: translateX(36vw); }     /* se escapa por el borde */
+  96%      { transform: translateX(36vw); }     /* escondido */
+  100%     { transform: translateX(0); }        /* se vuelve a asomar */
 }
 @media (min-width: 480px) {
-  .screencat { right: calc(50vw - 230px + 10px); }
+  .screencat { right: calc(50vw - 230px + 12px); }
 }
