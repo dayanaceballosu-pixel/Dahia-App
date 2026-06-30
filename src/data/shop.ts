@@ -58,3 +58,22 @@ export function isUnlocked(item: ShopItem, g: Gamification, month: number): bool
   if (!inSeason(item, month)) return false
   return (g.bestStreak ?? 0) >= item.unlockStreak
 }
+
+function usable(id: string, g: Gamification, month: number): boolean {
+  if (FREE_DEFAULTS.includes(id)) return true
+  const it = itemById(id)
+  return !!it && isUnlocked(it, g, month)
+}
+
+/** "Look" del gato filtrado a SOLO lo desbloqueado (lo bloqueado no se muestra).
+ *  Útil para limpiar accesorios que quedaron puestos de la tienda anterior. */
+export function effectiveLook(
+  g: Gamification,
+  month: number,
+): { equipped: string[]; skin: string; background: string } {
+  return {
+    equipped: (g.equipped ?? []).filter((id) => usable(id, g, month)),
+    skin: usable(g.skin, g, month) ? g.skin : 'pink',
+    background: usable(g.background, g, month) ? g.background : 'none',
+  }
+}

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useApp } from '../store/store'
+import { effectiveLook } from '../data/shop'
 import Cat, { type CatContext } from './Cat/Cat'
 
 /** Gatito de la barra: aparece deslizándose desde el costado (derecha) y se
@@ -17,6 +18,7 @@ export const ROUTE_CONTEXT: Record<string, CatContext> = {
 export default function BuddyCat({ context }: { context: CatContext }) {
   const { profile, gamification } = useApp()
   const wander = profile.catPresence === 'full'
+  const look = effectiveLook(gamification, new Date().getMonth() + 1)
   return (
     <motion.div
       className="screencat"
@@ -26,13 +28,7 @@ export default function BuddyCat({ context }: { context: CatContext }) {
       transition={BUDDY_SPRING}
     >
       <div className={`screencat__walk ${wander ? 'screencat__walk--on' : ''}`}>
-        <Cat
-          size={68}
-          equipped={gamification.equipped}
-          skin={gamification.skin}
-          context={context}
-          alive
-        />
+        <Cat size={68} equipped={look.equipped} skin={look.skin} context={context} alive />
       </div>
     </motion.div>
   )

@@ -9,6 +9,7 @@ import {
   FREE_DEFAULTS,
   isUnlocked,
   inSeason,
+  effectiveLook,
   type ItemKind,
   type ShopItem,
 } from '../data/shop'
@@ -29,6 +30,7 @@ export default function Shop() {
   const [preview, setPreview] = useState<ShopItem | null>(null)
   const month = new Date().getMonth() + 1
   const best = gamification.bestStreak ?? 0
+  const look = effectiveLook(gamification, month)
 
   const items = useMemo(() => SHOP_ITEMS.filter((i) => i.kind === tab), [tab])
 
@@ -63,10 +65,10 @@ export default function Shop() {
         </span>
       </div>
 
-      {/* Vista previa del outfit actual */}
+      {/* Vista previa del outfit actual (solo lo desbloqueado) */}
       <div className="shop-preview">
-        <CatStage background={gamification.background} size={190}>
-          <Cat size={150} equipped={gamification.equipped} skin={gamification.skin} alive />
+        <CatStage background={look.background} size={190}>
+          <Cat size={150} equipped={look.equipped} skin={look.skin} alive />
         </CatStage>
       </div>
 
@@ -139,14 +141,15 @@ function PreviewSheet({
     : false
   const best = gamification.bestStreak ?? 0
 
-  // outfit de la vista previa (con el ítem puesto, para que se vea cómo queda)
+  // outfit base = solo lo desbloqueado, + el ítem que se está viendo
+  const base = effectiveLook(gamification, month)
   const equipped = item
     ? item.kind === 'accessory'
-      ? Array.from(new Set([...gamification.equipped, item.id]))
-      : gamification.equipped
-    : gamification.equipped
-  const skin = item && item.kind === 'skin' ? item.id : gamification.skin
-  const background = item && item.kind === 'background' ? item.id : gamification.background
+      ? Array.from(new Set([...base.equipped, item.id]))
+      : base.equipped
+    : base.equipped
+  const skin = item && item.kind === 'skin' ? item.id : base.skin
+  const background = item && item.kind === 'background' ? item.id : base.background
 
   const isActive =
     item &&

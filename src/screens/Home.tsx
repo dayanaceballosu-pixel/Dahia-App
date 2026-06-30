@@ -8,6 +8,7 @@ import { BUDDY_SPRING } from '../components/BuddyCat'
 import Money from '../components/Money'
 import MovementRow from '../components/MovementRow'
 import { useSheets } from '../components/SheetsContext'
+import { effectiveLook } from '../data/shop'
 import { totalBalance, sortedDesc } from '../data/selectors'
 import { localDayKey } from '../lib/date'
 import './Home.css'
@@ -21,6 +22,7 @@ export default function Home() {
 
   const total = useMemo(() => totalBalance(accounts, movements), [accounts, movements])
   const recent = useMemo(() => sortedDesc(movements).slice(0, 4), [movements])
+  const look = useMemo(() => effectiveLook(gamification, new Date().getMonth() + 1), [gamification])
   const claimedToday = gamification.lastClaimDate === localDayKey()
 
   function flashToast(msg: string) {
@@ -59,18 +61,13 @@ export default function Home() {
       {/* Tarjeta de saldo + gato */}
       <section className="balancecard">
         <div className="balancecard__cat">
-          <CatStage background={gamification.background} size={168}>
+          <CatStage background={look.background} size={168}>
             <motion.div
               initial={{ x: 120, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={BUDDY_SPRING}
             >
-              <Cat
-                size={132}
-                mood={mood}
-                equipped={gamification.equipped}
-                skin={gamification.skin}
-              />
+              <Cat size={132} mood={mood} equipped={look.equipped} skin={look.skin} />
             </motion.div>
           </CatStage>
         </div>
