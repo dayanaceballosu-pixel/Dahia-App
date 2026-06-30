@@ -5,13 +5,14 @@ import Sheet from '../components/ui/Sheet'
 import { allBalances } from '../data/selectors'
 import { PALETTE } from '../data/seed'
 import { lastEmoji } from '../lib/emoji'
+import { parseAmountToCents } from '../lib/money'
 import type { Account } from '../data/types'
 import './Accounts.css'
 
 const EMOJI_SUGGEST = ['💵', '🏦', '🐷', '💳', '📱', '💖', '✨', '🪙', '👛', '🎀']
 
 export default function Accounts() {
-  const { accounts, movements, addAccount, updateAccount, archiveAccount } = useApp()
+  const { accounts, movements, addAccount, updateAccount, archiveAccount, addMovement } = useApp()
   const balances = useMemo(() => allBalances(movements), [movements])
 
   const active = accounts.filter((a) => !a.archived).sort((a, b) => a.order - b.order)
@@ -89,7 +90,16 @@ export default function Accounts() {
         open={creating}
         onClose={() => setCreating(false)}
         onSave={(data) => {
-          addAccount(data)
+          const acc = addAccount({ name: data.name, emoji: data.emoji, color: data.color })
+          if (data.initialCents !== 0) {
+            addMovement({
+              type: 'adjust',
+              amount: Math.abs(data.initialCents),
+              accountId: acc.id,
+              direction: data.initialCents < 0 ? 'out' : 'in',
+              note: 'Saldo inicial',
+            })
+          }
           setCreating(false)
         }}
       />
@@ -99,7 +109,8 @@ export default function Accounts() {
         account={editing ?? undefined}
         onClose={() => setEditing(null)}
         onSave={(data) => {
-          if (editing) updateAccount({ ...editing, ...data })
+          if (editing)
+            updateAccount({ ...editing, name: data.name, emoji: data.emoji, color: data.color })
           setEditing(null)
         }}
         onArchive={
@@ -125,12 +136,13 @@ function AccountEditor({
   open: boolean
   account?: Account
   onClose: () => void
-  onSave: (data: { name: string; emoji: string; color: string }) => void
+  onSave: (data: { name: string; emoji: string; color: string; initialCents: number }) => void
   onArchive?: () => void
 }) {
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState('💵')
   const [color, setColor] = useState('')
+  const [balRaw, setBalRaw] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -138,8 +150,12 @@ function AccountEditor({
       setEmoji(account?.emoji ?? EMOJI_SUGGEST[Math.floor(Math.random() * EMOJI_SUGGEST.length)])
       // sugerir un color si no tiene
       setColor(account?.color ?? PALETTE[Math.floor(Math.random() * PALETTE.length)])
+      setBalRaw('')
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const initialCents = parseAmountToCents(balRaw)
+  const missingBalance = !account && balRaw.trim() === ''
 
   return (
     <Sheet open={open} onClose={onClose} title={account ? 'Editar cuenta' : 'Nueva cuenta'}>
@@ -200,7 +216,34 @@ function AccountEditor({
           </div>
         </div>
 
-        <button className="btn btn--primary btn--block" disabled={!name.trim()} onClick={() => onSave({ name, emoji, color })}>
+        {!account && (
+          <div className="field">
+            <label>Saldo inicial</label>
+            <input
+              className="input"
+              inputMode="decimal"
+              placeholder="0"
+              value={balRaw}
+              onChange={(e) => setBalRaw(e.target.value)}
+            />
+            <p className="screen-sub" style={{ paddingLeft: 2 }}>
+              ¿Cuánto hay en esta cuenta ahora? Si está vacía, escribe <b>0</b>.{' '}
+              {initialCents !== 0 && (
+                <>
+                  Empezará con <Money value={initialCents} />.
+                </>
+              )}
+              <br />
+              No cuenta como ingreso en tus estadísticas.
+            </p>
+          </div>
+        )}
+
+        <button
+          className="btn btn--primary btn--block"
+          disabled={!name.trim() || missingBalance}
+          onClick={() => onSave({ name, emoji, color, initialCents })}
+        >
           {account ? 'Guardar cambios' : 'Crear cuenta'}
         </button>
 
