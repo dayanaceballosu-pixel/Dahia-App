@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sheet from './ui/Sheet'
 import Cat from './Cat/Cat'
-import Money from './Money'
 import { useApp } from '../store/store'
 import { parseAmountToCents } from '../lib/money'
 import { PALETTE } from '../data/seed'
@@ -165,13 +164,11 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
             </div>
           ) : (
             <>
-              {/* Monto */}
-              <div className="amount">
-                <div className="amount__preview">
-                  <Money value={type === 'expense' || (type === 'adjust' && direction === 'out') ? -cents : cents} colored />
-                </div>
+              {/* Monto — un solo número grande */}
+              <div className={`amount amount--${meta.cls}`}>
+                <span className="amount__cur">$</span>
                 <input
-                  className="amount__input"
+                  className="amount__big"
                   inputMode="decimal"
                   placeholder="0"
                   value={amountRaw}

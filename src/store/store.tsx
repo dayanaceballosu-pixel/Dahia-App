@@ -63,6 +63,7 @@ interface AppContextValue {
   addAccount: (data: { name: string; emoji: string; color: string }) => Account
   updateAccount: (account: Account) => void
   archiveAccount: (id: ID, archived: boolean) => void
+  deleteAccount: (id: ID) => void
 
   // categorías
   addCategory: (data: { name: string; emoji: string; color: string }) => Category
@@ -169,6 +170,16 @@ export function AppProvider({
           ...s,
           accounts: s.accounts.map((a) => (a.id === id ? { ...a, archived } : a)),
         }
+      })
+    },
+    [provider],
+  )
+
+  const deleteAccount = useCallback(
+    (id: ID) => {
+      setSnap((s) => {
+        provider.removeAccount(id)
+        return { ...s, accounts: s.accounts.filter((a) => a.id !== id) }
       })
     },
     [provider],
@@ -391,6 +402,7 @@ export function AppProvider({
       addAccount,
       updateAccount,
       archiveAccount,
+      deleteAccount,
       addCategory,
       updateCategory,
       deleteCategory,
@@ -412,6 +424,7 @@ export function AppProvider({
       addAccount,
       updateAccount,
       archiveAccount,
+      deleteAccount,
       addCategory,
       updateCategory,
       deleteCategory,

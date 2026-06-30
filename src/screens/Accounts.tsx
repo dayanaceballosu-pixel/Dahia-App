@@ -13,7 +13,11 @@ import './Accounts.css'
 const EMOJI_SUGGEST = ['💵', '🏦', '🐷', '💳', '📱', '💖', '✨', '🪙', '👛', '🎀']
 
 export default function Accounts() {
-  const { accounts, movements, addAccount, updateAccount, archiveAccount, addMovement } = useApp()
+  const { accounts, movements, addAccount, updateAccount, archiveAccount, deleteAccount, addMovement } =
+    useApp()
+
+  const accountHasMovements = (id: string) =>
+    movements.some((m) => m.accountId === id || m.toAccountId === id)
   const balances = useMemo(() => allBalances(movements), [movements])
 
   const active = accounts.filter((a) => !a.archived).sort((a, b) => a.order - b.order)
@@ -108,6 +112,7 @@ export default function Accounts() {
       <AccountEditor
         open={!!editing}
         account={editing ?? undefined}
+        hasMovements={editing ? accountHasMovements(editing.id) : true}
         onClose={() => setEditing(null)}
         onSave={(data) => {
           if (editing)
@@ -117,8 +122,15 @@ export default function Accounts() {
         onArchive={
           editing
             ? () => {
-                archiveAccount(editing.id, true)
-                setEditing(null)
+                if (accountHasMovements(editing.id)) {
+                  archiveAccount(editing.id, true)
+                  setEditing(null)
+                } else if (
+                  confirm('Esta cuenta no tiene movimientos. ¿Eliminarla del todo?')
+                ) {
+                  deleteAccount(editing.id)
+                  setEditing(null)
+                }
               }
             : undefined
         }
@@ -132,12 +144,14 @@ export default function Accounts() {
 function AccountEditor({
   open,
   account,
+  hasMovements = true,
   onClose,
   onSave,
   onArchive,
 }: {
   open: boolean
   account?: Account
+  hasMovements?: boolean
   onClose: () => void
   onSave: (data: { name: string; emoji: string; color: string; initialCents: number }) => void
   onArchive?: () => void
@@ -252,7 +266,7 @@ function AccountEditor({
 
         {onArchive && (
           <button className="btn btn--ghost btn--block" onClick={onArchive}>
-            Archivar cuenta
+            {hasMovements ? '🗄️ Archivar cuenta' : '🗑️ Eliminar cuenta'}
           </button>
         )}
       </div>
