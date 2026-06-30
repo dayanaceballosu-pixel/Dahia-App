@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import BottomNav from './BottomNav'
+import BottomNav, { Fab } from './BottomNav'
 import AddSheet from './AddSheet'
 import BuddyCat, { ROUTE_CONTEXT } from './BuddyCat'
 import { SheetsContext } from './SheetsContext'
@@ -34,7 +34,8 @@ export default function Layout() {
           )}
         </AnimatePresence>
 
-        <BottomNav onAdd={() => openAdd(null)} addOpen={addOpen} />
+        <BottomNav />
+        <Fab onClick={() => openAdd(null)} open={addOpen} />
         <AddSheet
           open={addOpen}
           edit={edit}

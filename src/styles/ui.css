@@ -207,7 +207,7 @@
   position: fixed;
   right: 12px;
   bottom: calc(var(--nav-h) + var(--safe-bottom) - 10px); /* apoyado en el borde de la barra */
-  z-index: 45; /* por encima de la barra (z-40) */
+  z-index: 42; /* sobre la barra (40) pero DEBAJO del botón + (46) */
   pointer-events: auto;
   filter: drop-shadow(0 8px 14px rgba(214, 51, 132, 0.3));
   will-change: transform;

@@ -43,14 +43,18 @@
 .navitem--active .navitem__icon { transform: translateY(-2px) scale(1.12); }
 .navitem:active { transform: scale(0.9); }
 
-/* Botón central + */
+.fab-slot { pointer-events: none; }
+
+/* Botón central + — capa propia, por ENCIMA del gatito (z-45) */
 .fab {
   pointer-events: auto;
-  position: relative;
-  justify-self: center;
+  position: fixed;
+  left: 50%;
+  margin-left: -32px;
+  bottom: calc(var(--safe-bottom) + 36px);
+  z-index: 46;
   width: 64px;
   height: 64px;
-  margin-top: -26px;
   border-radius: 50%;
   display: grid;
   place-items: center;
