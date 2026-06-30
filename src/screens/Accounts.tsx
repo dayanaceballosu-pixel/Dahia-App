@@ -4,6 +4,7 @@ import Money from '../components/Money'
 import Sheet from '../components/ui/Sheet'
 import { allBalances } from '../data/selectors'
 import { PALETTE } from '../data/seed'
+import { lastEmoji } from '../lib/emoji'
 import type { Account } from '../data/types'
 import './Accounts.css'
 
@@ -161,8 +162,9 @@ function AccountEditor({
             <input
               className="input emoji-input"
               value={emoji}
-              maxLength={2}
-              onChange={(e) => setEmoji(e.target.value)}
+              onChange={(e) => setEmoji(lastEmoji(e.target.value))}
+              placeholder="😺"
+              aria-label="Emoji de la cuenta"
             />
             <div className="chips-scroll no-scrollbar">
               {EMOJI_SUGGEST.map((e) => (
@@ -172,6 +174,9 @@ function AccountEditor({
               ))}
             </div>
           </div>
+          <p className="screen-sub" style={{ paddingLeft: 2 }}>
+            Toca el cuadro y abre el teclado de emojis 😺 — el que quieras. Los de la derecha son atajos.
+          </p>
         </div>
 
         <div className="field">

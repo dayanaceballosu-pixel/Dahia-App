@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../store/store'
 import Cat from '../components/Cat/Cat'
 import { parseAmountToCents } from '../lib/money'
+import { lastEmoji } from '../lib/emoji'
 import { PALETTE } from '../data/seed'
 import Money from '../components/Money'
 import './Onboarding.css'
@@ -76,16 +77,25 @@ export default function Onboarding() {
 
             <div className="field">
               <label>Emoji</label>
-              <div className="rowflex" style={{ gap: 8, flexWrap: 'wrap' }}>
-                {EMOJIS.map((e) => (
-                  <button
-                    key={e}
-                    className={`emoji-chip ${accEmoji === e ? 'emoji-chip--on' : ''}`}
-                    onClick={() => setAccEmoji(e)}
-                  >
-                    {e}
-                  </button>
-                ))}
+              <div className="rowflex" style={{ gap: 8 }}>
+                <input
+                  className="input emoji-input"
+                  value={accEmoji}
+                  onChange={(e) => setAccEmoji(lastEmoji(e.target.value))}
+                  placeholder="😺"
+                  aria-label="Emoji de la cuenta"
+                />
+                <div className="chips-scroll no-scrollbar">
+                  {EMOJIS.map((e) => (
+                    <button
+                      key={e}
+                      className={`emoji-chip ${accEmoji === e ? 'emoji-chip--on' : ''}`}
+                      onClick={() => setAccEmoji(e)}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
