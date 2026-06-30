@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Gatito Dahia — Muestra</title>
+<style>
+  :root{
+    --pink-1:#ffe6f1; --pink-2:#ffd0e6; --pink-3:#ffb8d9;
+    --pink-4:#ff9ec7; --pink-5:#ff7fb3;
+    --cat:#ffc7e0; --cat-shade:#ffb0d4; --ear:#ff9ec7; --ear-in:#ff7fb3;
+    --ink:#5b4350; --blush:#ff7aa8;
+    --green:#56c596; --red:#ff8aa0;
+    --glass:rgba(255,255,255,.55);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:radial-gradient(120% 100% at 50% 0%, var(--pink-1) 0%, var(--pink-2) 45%, #fbe3ff 100%);
+    min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:22px;padding:28px 18px 40px;color:var(--ink);
+    overflow-x:hidden;
+  }
+  /* floaty sparkles in background */
+  .bg-deco{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+  .bg-deco span{position:absolute;font-size:18px;opacity:.5;animation:rise linear infinite}
+  @keyframes rise{from{transform:translateY(20px);opacity:0}10%{opacity:.6}to{transform:translateY(-110vh);opacity:0}}
+
+  .title{z-index:1;text-align:center}
+  .title h1{margin:0;font-size:20px;font-weight:800;letter-spacing:.3px}
+  .title p{margin:4px 0 0;font-size:13px;opacity:.7}
+
+  .stage{
+    z-index:1;position:relative;width:280px;max-width:88vw;aspect-ratio:1;
+    background:var(--glass);border:1px solid rgba(255,255,255,.7);
+    border-radius:36px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    box-shadow:0 18px 40px -18px rgba(255,90,160,.55), inset 0 1px 0 rgba(255,255,255,.8);
+    display:flex;align-items:center;justify-content:center;
+  }
+  /* speech bubble */
+  .bubble{
+    position:absolute;top:14px;left:50%;transform:translateX(-50%) scale(.8);
+    background:#fff;border-radius:16px;padding:7px 14px;font-size:13px;font-weight:700;
+    white-space:nowrap;box-shadow:0 8px 20px -8px rgba(255,90,160,.6);
+    opacity:0;transition:opacity .25s ease, transform .25s cubic-bezier(.2,1.4,.4,1);
+  }
+  .bubble::after{content:"";position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
+    border:7px solid transparent;border-top-color:#fff;border-bottom:0}
+  .bubble.show{opacity:1;transform:translateX(-50%) scale(1)}
+
+  .cat-wrap{width:200px;animation:float 3.6s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+
+  /* blink */
+  #eyesOpen{transform-origin:center 118px;animation:blink 4.6s infinite}
+  @keyframes blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+  /* tail sway */
+  #tail{transform-origin:170px 175px;animation:tail 2.8s ease-in-out infinite}
+  @keyframes tail{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(10deg)}}
+  /* ear twitch */
+  #earL{transform-origin:92px 70px;animation:twitch 5.5s ease-in-out infinite}
+  @keyframes twitch{0%,90%,100%{transform:rotate(0)}94%{transform:rotate(-7deg)}}
+
+  /* expression variants hidden by default */
+  #eyesHappy,#eyesTeary,#tear,#mouthSad,#pawWave,.fx{display:none}
+
+  .mood-greet #pawWave{display:block;transform-origin:64px 150px;animation:wave .5s ease-in-out 3}
+  @keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-26deg)}}
+
+  .mood-income #eyesOpen{display:none}
+  .mood-income #eyesHappy{display:block}
+  .mood-income .cat-wrap{animation:bounce .5s ease 2}
+  @keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-16px)}}
+
+  .mood-good #eyesOpen{display:none}
+  .mood-good #eyesHappy{display:block}
+
+  .mood-expense #eyesOpen{display:none}
+  .mood-expense #eyesTeary{display:block}
+  .mood-expense #mouthSmile{display:none}
+  .mood-expense #mouthSad{display:block}
+  .mood-expense #tear{display:block;animation:drop 1.4s ease-in infinite}
+  @keyframes drop{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(26px);opacity:0}}
+
+  /* floating fx (hearts / coins / stars) */
+  .fx{position:absolute;font-size:22px;animation:fx 1.4s ease-out forwards}
+  @keyframes fx{0%{transform:translateY(10px) scale(.5);opacity:0}
+    20%{opacity:1}100%{transform:translateY(-90px) scale(1.1);opacity:0}}
+
+  .controls{z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:10px;width:280px;max-width:88vw}
+  button{
+    border:0;border-radius:16px;padding:13px 10px;font-size:14px;font-weight:800;
+    color:#fff;cursor:pointer;transition:transform .12s ease, box-shadow .2s ease;
+    box-shadow:0 10px 22px -10px rgba(0,0,0,.3);
+  }
+  button:active{transform:scale(.94)}
+  .b-greet{background:linear-gradient(135deg,#ff9ec7,#ff7fb3)}
+  .b-income{background:linear-gradient(135deg,#7fe0b0,#42b98a)}
+  .b-expense{background:linear-gradient(135deg,#ffb0bd,#ff7d92)}
+  .b-good{background:linear-gradient(135deg,#ffd27f,#ff9ec7)}
+  .hint{z-index:1;font-size:12px;opacity:.6;text-align:center;max-width:280px}
+</style>
+</head>
+<body>
+  <div class="bg-deco" id="deco"></div>
+
+  <div class="title">
+    <h1>🌸 Gatito de Dahia App</h1>
+    <p>Muestra del camino A (vectorial animado). Toca los botones 👇</p>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="bubble" id="bubble"></div>
+    <div class="cat-wrap">
+      <svg viewBox="0 0 240 240" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <!-- tail -->
+        <path id="tail" d="M168 178 q44 6 40 -40 q-3 -22 -20 -22 q14 6 12 24 q-2 26 -34 24 z" fill="var(--cat-shade)"/>
+        <!-- body -->
+        <ellipse cx="120" cy="178" rx="62" ry="48" fill="var(--cat)"/>
+        <ellipse cx="120" cy="190" rx="40" ry="30" fill="#fff" opacity=".55"/>
+        <!-- feet -->
+        <ellipse cx="96" cy="214" rx="17" ry="12" fill="var(--cat-shade)"/>
+        <ellipse cx="144" cy="214" rx="17" ry="12" fill="var(--cat-shade)"/>
+        <!-- waving paw (greet) -->
+        <ellipse id="pawWave" cx="64" cy="150" rx="15" ry="17" fill="var(--cat)"/>
+        <!-- ears -->
+        <path id="earL" d="M74 92 L86 50 L116 78 Z" fill="var(--ear)"/>
+        <path d="M166 92 L154 50 L124 78 Z" fill="var(--ear)"/>
+        <path d="M83 84 L90 62 L106 78 Z" fill="var(--ear-in)"/>
+        <path d="M157 84 L150 62 L134 78 Z" fill="var(--ear-in)"/>
+        <!-- head -->
+        <circle cx="120" cy="112" r="56" fill="var(--cat)"/>
+        <!-- blush -->
+        <ellipse cx="84" cy="124" rx="13" ry="8" fill="var(--blush)" opacity=".55"/>
+        <ellipse cx="156" cy="124" rx="13" ry="8" fill="var(--blush)" opacity=".55"/>
+        <!-- eyes: open -->
+        <g id="eyesOpen">
+          <ellipse cx="98" cy="112" rx="9" ry="12" fill="var(--ink)"/>
+          <ellipse cx="142" cy="112" rx="9" ry="12" fill="var(--ink)"/>
+          <circle cx="101" cy="108" r="3" fill="#fff"/>
+          <circle cx="145" cy="108" r="3" fill="#fff"/>
+          <circle cx="95" cy="115" r="1.6" fill="#fff" opacity=".8"/>
+          <circle cx="139" cy="115" r="1.6" fill="#fff" opacity=".8"/>
+        </g>
+        <!-- eyes: happy ^^ -->
+        <g id="eyesHappy" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round">
+          <path d="M88 114 q10 -12 20 0"/>
+          <path d="M132 114 q10 -12 20 0"/>
+        </g>
+        <!-- eyes: teary -->
+        <g id="eyesTeary">
+          <path d="M88 110 q10 -10 20 0" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+          <path d="M132 110 q10 -10 20 0" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+        </g>
+        <ellipse id="tear" cx="98" cy="124" rx="4" ry="6" fill="#7fc8ff"/>
+        <!-- nose + mouth -->
+        <path d="M116 126 h8 l-4 5 z" fill="var(--ear-in)"/>
+        <path id="mouthSmile" d="M120 131 q-7 8 -14 2 M120 131 q7 8 14 2" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>
+        <path id="mouthSad" d="M108 140 q12 -8 24 0" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>
+        <!-- whiskers -->
+        <g stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" opacity=".5">
+          <line x1="64" y1="120" x2="84" y2="122"/>
+          <line x1="64" y1="130" x2="84" y2="129"/>
+          <line x1="176" y1="120" x2="156" y2="122"/>
+          <line x1="176" y1="130" x2="156" y2="129"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="b-greet"   onclick="mood('greet')">👋 Saludar</button>
+    <button class="b-income"  onclick="mood('income')">💚 Ingreso</button>
+    <button class="b-expense" onclick="mood('expense')">😿 Gasto grande</button>
+    <button class="b-good"    onclick="mood('good')">🎉 Buen mes</button>
+  </div>
+  <p class="hint">Esto es solo una <b>muestra</b> para que decidas el estilo del gato. No es la app todavía. Si te gusta cómo se ve y se mueve → vamos con el camino A. Si te parece poco → te muestro el camino C (Lottie).</p>
+
+<script>
+  const stage=document.getElementById('stage');
+  const bubble=document.getElementById('bubble');
+  const moods={
+    greet:{t:"¡Hola, Dayana! 🌸",fx:["🌸","💕","✨"]},
+    income:{t:"¡Bien! +$ 💚",fx:["💚","🪙","✨","💚"]},
+    expense:{t:"Uy… cuidado 😿",fx:["💸"]},
+    good:{t:"¡Vas increíble! 🎉",fx:["⭐","🎉","💖","⭐","✨"]},
+  };
+  let timer;
+  function mood(m){
+    stage.parentNode;
+    const wrap=document.querySelector('.stage');
+    wrap.className='stage mood-'+m;
+    // re-trigger css animations
+    const cat=document.querySelector('.cat-wrap');
+    cat.style.animation='none'; void cat.offsetWidth; cat.style.animation='';
+    bubble.textContent=moods[m].t;
+    bubble.classList.add('show');
+    spawnFx(moods[m].fx);
+    clearTimeout(timer);
+    timer=setTimeout(()=>{wrap.className='stage';bubble.classList.remove('show');},2600);
+  }
+  function spawnFx(list){
+    const wrap=document.querySelector('.stage');
+    list.forEach((e,i)=>{
+      const s=document.createElement('span');
+      s.className='fx';s.textContent=e;
+      s.style.left=(40+Math.random()*180)+'px';
+      s.style.bottom='70px';
+      s.style.animationDelay=(i*0.12)+'s';
+      wrap.appendChild(s);
+      setTimeout(()=>s.remove(),1600);
+    });
+  }
+  // background sparkles
+  const deco=document.getElementById('deco');
+  ["🌸","✨","💕","🌷","⭐"].forEach((e,i)=>{
+    for(let k=0;k<3;k++){
+      const s=document.createElement('span');
+      s.textContent=e;
+      s.style.left=(Math.random()*100)+'vw';
+      s.style.animationDuration=(9+Math.random()*8)+'s';
+      s.style.animationDelay=(Math.random()*8)+'s';
+      deco.appendChild(s);
+    }
+  });
+  // greet on load
+  setTimeout(()=>mood('greet'),500);
+</script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+.cat {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.cat svg { overflow: visible; }
+
+/* respiración / flote suave */
+.cat__body { transform-box: fill-box; animation: cat-float 3.6s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes cat-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2%) scale(1.012); }
+}
+
+/* parpadeo */
+.cat__eyes { transform-box: fill-box; transform-origin: center; animation: cat-blink 4.8s infinite; }
+@keyframes cat-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+
+/* colita */
+.cat__tail { transform-box: fill-box; transform-origin: 90% 90%; animation: cat-tail 2.8s ease-in-out infinite; }
+@keyframes cat-tail {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(11deg); }
+}
+
+/* oreja: pequeño tic ocasional */
+.cat__earL { transform-box: fill-box; transform-origin: 60% 90%; animation: cat-twitch 5.5s ease-in-out infinite; }
+@keyframes cat-twitch {
+  0%, 90%, 100% { transform: rotate(0); }
+  94% { transform: rotate(-8deg); }
+}
+
+/* salto al tocar */
+.cat--tap .cat__body { animation: cat-pounce 0.5s var(--ease-pop, cubic-bezier(.2,1.4,.4,1)); }
+@keyframes cat-pounce {
+  0% { transform: translateY(0) scale(1); }
+  35% { transform: translateY(-14%) scale(1.06, 0.96); }
+  70% { transform: translateY(2%) scale(0.97, 1.03); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* estirarse (idle) */
+.cat--stretch .cat__body { animation: cat-stretch 1.6s ease-in-out; }
+@keyframes cat-stretch {
+  0%, 100% { transform: scale(1, 1); }
+  40% { transform: scale(1.08, 0.92) translateY(2%); }
+  70% { transform: scale(0.96, 1.05); }
+}
+
+/* celebrar (rebote alegre) */
+.cat--celebrate .cat__body { animation: cat-bounce 0.6s ease 2; }
+@keyframes cat-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-16%); }
+}
+
+/* zzz al dormir */
+.cat__zzz { opacity: 0; animation: cat-zzz 3s ease-in-out infinite; }
+@keyframes cat-zzz {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  30% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(8px, -16px) scale(1.1); }
+}
+
+/* lágrima */
+.cat__tear { animation: cat-drop 1.5s ease-in infinite; }
+@keyframes cat-drop {
+  0% { transform: translateY(0); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: translateY(16px); opacity: 0; }
+}
+
+/* corazones / estrellas al tocar o celebrar */
+.cat__fx { position: absolute; left: 50%; top: 30%; pointer-events: none; font-size: 1.1rem; animation: cat-rise 1.1s ease-out forwards; }
+@keyframes cat-rise {
+  0% { transform: translate(-50%, 10px) scale(0.4); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate(-50%, -60px) scale(1.1); opacity: 0; }
+}
+
+/* burbuja de diálogo */
+.cat__bubble {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%) translateY(-6px);
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 14px;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(8px);
+  z-index: 3;
+  animation: cat-bubble 0.3s var(--ease-pop, cubic-bezier(.2,1.4,.4,1));
+}
+.cat__bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--surface-strong);
+}
+@keyframes cat-bubble {
+  from { opacity: 0; transform: translateX(-50%) translateY(2px) scale(0.85); }
+}
+
+/* aparición de accesorio */
+.cat__acc { transform-box: fill-box; transform-origin: center; }
+.cat__acc--pop { animation: cat-accpop 0.4s var(--ease-pop, cubic-bezier(.2,1.4,.4,1)); }
+@keyframes cat-accpop { from { transform: scale(0); } }
