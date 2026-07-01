@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store/store'
 import MovementRow from '../components/MovementRow'
@@ -6,6 +6,7 @@ import { useSheets } from '../components/SheetsContext'
 import { sortedDesc } from '../data/selectors'
 import { relativeDay, localDayKey } from '../lib/date'
 import type { Movement, MovementType } from '../data/types'
+import './Movements.css'
 
 type Filter = 'all' | MovementType
 
@@ -46,39 +47,24 @@ export default function Movements() {
         </button>
       </div>
 
-      {/* Filtros por tipo */}
-      <div className="chips-scroll no-scrollbar">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            className={`chip ${filter === f.key ? 'chip--active' : ''}`}
-            onClick={() => setFilter(f.key)}
-          >
-            {f.label}
-          </button>
-        ))}
+      {/* Dos barras desplegables: Tipo y Cuenta */}
+      <div className="fsel-row">
+        <FilterSelect
+          value={filter}
+          options={FILTERS.map((f) => ({ key: f.key, label: f.label }))}
+          onChange={(k) => setFilter(k as Filter)}
+        />
+        {activeAccounts.length > 1 && (
+          <FilterSelect
+            value={accFilter}
+            options={[
+              { key: 'all', label: 'Todas' },
+              ...activeAccounts.map((a) => ({ key: a.id, label: a.name, emoji: a.emoji })),
+            ]}
+            onChange={setAccFilter}
+          />
+        )}
       </div>
-
-      {/* Filtros por cuenta */}
-      {activeAccounts.length > 1 && (
-        <div className="chips-scroll no-scrollbar">
-          <button
-            className={`chip ${accFilter === 'all' ? 'chip--active' : ''}`}
-            onClick={() => setAccFilter('all')}
-          >
-            Todas
-          </button>
-          {activeAccounts.map((a) => (
-            <button
-              key={a.id}
-              className={`chip ${accFilter === a.id ? 'chip--active' : ''}`}
-              onClick={() => setAccFilter(a.id)}
-            >
-              {a.emoji} {a.name}
-            </button>
-          ))}
-        </div>
-      )}
 
       {filtered.length === 0 ? (
         <div className="card empty">
@@ -102,6 +88,70 @@ export default function Movements() {
         </div>
       )}
     </main>
+  )
+}
+
+/* Barra desplegable (dropdown) para un filtro. Flota encima, se cierra al
+   elegir o al tocar afuera. No hay que deslizar de lado buscando opciones. */
+interface Opt {
+  key: string
+  label: string
+  emoji?: string
+}
+function FilterSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: string
+  options: Opt[]
+  onChange: (key: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const current = options.find((o) => o.key === value) ?? options[0]
+  const active = value !== 'all'
+
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', onDoc)
+    return () => document.removeEventListener('pointerdown', onDoc)
+  }, [open])
+
+  return (
+    <div className="fsel" ref={ref}>
+      <button
+        className={`fsel__bar ${open ? 'fsel__bar--open' : ''} ${active ? 'fsel__bar--active' : ''}`}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="fsel__val">
+          {current?.emoji ? `${current.emoji} ` : ''}
+          {current?.label}
+        </span>
+        <span className="fsel__caret">▼</span>
+      </button>
+      {open && (
+        <div className="fsel__menu no-scrollbar">
+          {options.map((o) => (
+            <button
+              key={o.key}
+              className={`fsel__opt ${o.key === value ? 'fsel__opt--on' : ''}`}
+              onClick={() => {
+                onChange(o.key)
+                setOpen(false)
+              }}
+            >
+              {o.emoji ? `${o.emoji} ` : ''}
+              {o.label}
+              {o.key === value && <span className="fsel__check">✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
