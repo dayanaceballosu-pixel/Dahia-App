@@ -256,6 +256,8 @@ body.addsheet-open .screencat {
 /* la caminata va en una capa interna (la externa la controla la transición) */
 .screencat__walk { display: inline-block; }
 .screencat__walk--on { animation: cat-walk 24s ease-in-out infinite; }
+/* mientras se arrastra: congela la caminata en su sitio actual */
+.screencat__walk--paused { animation-play-state: paused; }
 @keyframes cat-walk {
   0%, 5%   { transform: translateX(0); }       /* a la derecha */
   28%      { transform: translateX(-72vw); }   /* caminó a la izquierda */

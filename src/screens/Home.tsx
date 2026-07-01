@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useApp } from '../store/store'
 import Cat, { type CatMood } from '../components/Cat/Cat'
 import CatStage from '../components/Cat/CatStage'
+import DraggableCat from '../components/DraggableCat'
 import { BUDDY_SPRING } from '../components/BuddyCat'
 import Money from '../components/Money'
 import MovementRow from '../components/MovementRow'
@@ -101,7 +102,9 @@ export default function Home() {
               animate={{ x: 0, opacity: 1 }}
               transition={BUDDY_SPRING}
             >
-              <Cat size={132} mood={mood} equipped={look.equipped} skin={look.skin} />
+              <DraggableCat>
+                <Cat size={132} mood={mood} equipped={look.equipped} skin={look.skin} />
+              </DraggableCat>
             </motion.div>
           </CatStage>
         </div>
