@@ -173,6 +173,7 @@
    se centra por su cuenta (align-self). */
 .sheet-stack {
   width: 100%;
+  min-width: 0;
   max-width: var(--maxw);
   display: flex;
   flex-direction: column;
@@ -182,9 +183,11 @@
   position: relative;
   z-index: 1;
   width: 100%;
+  min-width: 0;
   max-width: var(--maxw);
   max-height: 92dvh;
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   background: var(--surface-strong);

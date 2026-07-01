@@ -85,7 +85,7 @@
   width: 62px;
   text-align: center;
   font-size: 24px;
-  flex: 0 0 auto;
+  flex: 0 0 62px; /* flex-basis gana al width:100% global, no se estira */
   padding: 8px;
 }
 .emoji-chip {
