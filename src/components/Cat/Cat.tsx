@@ -243,14 +243,28 @@ export default function Cat({
             </g>
           )}
 
-          {/* Camiseta de Colombia (Mundial) */}
+          {/* Camiseta de Colombia (Mundial) — tricolor con detallitos */}
           {equipped.includes('mn_colombia') && (
             <g className="cat__acc">
+              {/* mangas */}
               <ellipse cx="72" cy="170" rx="13" ry="16" fill="#ffcd00" stroke="#e0b400" strokeWidth="1" />
               <ellipse cx="168" cy="170" rx="13" ry="16" fill="#ffcd00" stroke="#e0b400" strokeWidth="1" />
+              {/* torso */}
               <path d="M78 152 Q120 146 162 152 L168 196 Q120 216 72 196 Z" fill="#ffcd00" stroke="#e0b400" strokeWidth="1.5" />
-              <path d="M104 150 Q120 164 136 150" fill="none" stroke="#003893" strokeWidth="3" />
-              <text x="120" y="196" fontSize="20" fontWeight="800" fill="#003893" textAnchor="middle">10</text>
+              {/* puños tricolor */}
+              <path d="M60 181 Q72 190 84 181" fill="none" stroke="#003893" strokeWidth="2.6" />
+              <path d="M61 184 Q72 191 83 184" fill="none" stroke="#ce1126" strokeWidth="1.8" />
+              <path d="M156 181 Q168 190 180 181" fill="none" stroke="#003893" strokeWidth="2.6" />
+              <path d="M157 184 Q168 191 179 184" fill="none" stroke="#ce1126" strokeWidth="1.8" />
+              {/* dobladillo tricolor */}
+              <path d="M74 201 Q120 217 166 201" fill="none" stroke="#003893" strokeWidth="2.6" />
+              <path d="M77 205 Q120 219 163 205" fill="none" stroke="#ce1126" strokeWidth="2" />
+              {/* escudo: banderita de Colombia */}
+              <rect x="86" y="177" width="15" height="11" rx="1.8" fill="#ffcd00" stroke="#b98f10" strokeWidth="1" />
+              <rect x="86.6" y="182.6" width="13.8" height="2.9" fill="#003893" />
+              <rect x="86.6" y="185.5" width="13.8" height="2.4" fill="#ce1126" />
+              {/* número */}
+              <text x="127" y="197" fontSize="18" fontWeight="800" fill="#003893" textAnchor="middle">10</text>
             </g>
           )}
 
