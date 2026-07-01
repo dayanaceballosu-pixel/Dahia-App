@@ -243,28 +243,49 @@ export default function Cat({
             </g>
           )}
 
-          {/* Camiseta de Colombia (Mundial) — tricolor con detallitos */}
+          {/* Camiseta de Colombia (Mundial) — tricolor PINTADO (bloques recortados a la tela) */}
           {equipped.includes('mn_colombia') && (
             <g className="cat__acc">
-              {/* mangas */}
+              <defs>
+                <clipPath id="colTor">
+                  <path d="M78 152 Q120 146 162 152 L168 196 Q120 216 72 196 Z" />
+                </clipPath>
+                <clipPath id="colSlL">
+                  <ellipse cx="72" cy="170" rx="13" ry="16" />
+                </clipPath>
+                <clipPath id="colSlR">
+                  <ellipse cx="168" cy="170" rx="13" ry="16" />
+                </clipPath>
+              </defs>
+
+              {/* mangas + puños pintados (el torso tapa la parte interna) */}
               <ellipse cx="72" cy="170" rx="13" ry="16" fill="#ffcd00" stroke="#e0b400" strokeWidth="1" />
+              <g clipPath="url(#colSlL)">
+                <rect x="58" y="177" width="28" height="4" fill="#003893" />
+                <rect x="58" y="181" width="28" height="9" fill="#ce1126" />
+              </g>
               <ellipse cx="168" cy="170" rx="13" ry="16" fill="#ffcd00" stroke="#e0b400" strokeWidth="1" />
-              {/* torso */}
+              <g clipPath="url(#colSlR)">
+                <rect x="154" y="177" width="28" height="4" fill="#003893" />
+                <rect x="154" y="181" width="28" height="9" fill="#ce1126" />
+              </g>
+
+              {/* torso amarillo */}
               <path d="M78 152 Q120 146 162 152 L168 196 Q120 216 72 196 Z" fill="#ffcd00" stroke="#e0b400" strokeWidth="1.5" />
-              {/* puños tricolor (banda en el filo de la manga) */}
-              <path d="M63 180 Q72 184 81 180" fill="none" stroke="#003893" strokeWidth="2.4" />
-              <path d="M64 182.5 Q72 185.5 80 182.5" fill="none" stroke="#ce1126" strokeWidth="1.8" />
-              <path d="M159 180 Q168 184 177 180" fill="none" stroke="#003893" strokeWidth="2.4" />
-              <path d="M160 182.5 Q168 185.5 176 182.5" fill="none" stroke="#ce1126" strokeWidth="1.8" />
-              {/* dobladillo tricolor: es el BORDE inferior de la camiseta (rojo al filo) */}
-              <path d="M80 195 Q120 209 160 195" fill="none" stroke="#003893" strokeWidth="2.4" />
-              <path d="M76 198 Q120 213 164 198" fill="none" stroke="#ce1126" strokeWidth="2.4" />
+
+              {/* dobladillo pintado: azul y rojo siguiendo la curva del filo (rojo al borde) */}
+              <g clipPath="url(#colTor)">
+                <path d="M72 190 Q120 208 168 190 L168 183 Q120 200 72 183 Z" fill="#003893" />
+                <path d="M72 196 Q120 216 168 196 L168 190 Q120 208 72 190 Z" fill="#ce1126" />
+              </g>
+
               {/* escudo: banderita de Colombia */}
-              <rect x="86" y="177" width="15" height="11" rx="1.8" fill="#ffcd00" stroke="#b98f10" strokeWidth="1" />
-              <rect x="86.6" y="182.6" width="13.8" height="2.9" fill="#003893" />
-              <rect x="86.6" y="185.5" width="13.8" height="2.4" fill="#ce1126" />
+              <rect x="86" y="174" width="15" height="11" rx="1.8" fill="#ffcd00" stroke="#b98f10" strokeWidth="1" />
+              <rect x="86.6" y="179.6" width="13.8" height="2.9" fill="#003893" />
+              <rect x="86.6" y="182.5" width="13.8" height="2.4" fill="#ce1126" />
+
               {/* número */}
-              <text x="127" y="197" fontSize="18" fontWeight="800" fill="#003893" textAnchor="middle">10</text>
+              <text x="127" y="189" fontSize="17" fontWeight="800" fill="#003893" textAnchor="middle">10</text>
             </g>
           )}
 
