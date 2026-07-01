@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sheet from './ui/Sheet'
 import Cat from './Cat/Cat'
+import PeekCat from './PeekCat'
 import { useApp } from '../store/store'
 import { parseAmountToCents, currencySymbol } from '../lib/money'
 import { PALETTE } from '../data/seed'
@@ -66,6 +67,13 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
       setToAccountId(active[1]?.id ?? '')
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Mientras la hoja está abierta, escondemos el gato de fondo (Inicio/Tokens/
+  // Tienda/buddy) para que solo se vea el gatito chismoso y no rompa la ilusión.
+  useEffect(() => {
+    document.body.classList.toggle('addsheet-open', open)
+    return () => document.body.classList.remove('addsheet-open')
+  }, [open])
 
   const cents = parseAmountToCents(amountRaw)
   const centsTo = parseAmountToCents(amountToRaw)
@@ -148,6 +156,7 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
       open={open}
       onClose={onClose}
       title={isEdit ? 'Editar movimiento' : step === 'type' ? '¿Qué registramos?' : undefined}
+      peek={step === 'type' ? <PeekCat /> : null}
     >
       {step === 'type' && (
         <div className="typegrid">

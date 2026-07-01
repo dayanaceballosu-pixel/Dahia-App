@@ -6,9 +6,11 @@ interface SheetProps {
   onClose: () => void
   title?: string
   children: ReactNode
+  /** elemento que se asoma por encima del borde superior (ej: gatito chismoso) */
+  peek?: ReactNode
 }
 
-export default function Sheet({ open, onClose, title, children }: SheetProps) {
+export default function Sheet({ open, onClose, title, children, peek }: SheetProps) {
   const controls = useDragControls()
   const [kb, setKb] = useState(0) // alto del teclado (px) en iOS
 
@@ -62,6 +64,8 @@ export default function Sheet({ open, onClose, title, children }: SheetProps) {
           transition={{ duration: 0.2 }}
           onClick={onClose}
         >
+          <div className="sheet-stack">
+          {peek}
           <motion.div
             className="sheet no-scrollbar"
             style={{ maxHeight: kb ? `calc(100dvh - ${kb + 12}px)` : undefined }}
@@ -91,6 +95,7 @@ export default function Sheet({ open, onClose, title, children }: SheetProps) {
             {title && <div className="sheet__title">{title}</div>}
             {children}
           </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

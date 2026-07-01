@@ -4,7 +4,7 @@ import './cat.css'
 export type CatMood = 'idle' | 'happy' | 'sad' | 'celebrate' | 'sleep'
 export type CatContext = 'home' | 'accounts' | 'movements' | 'stats' | 'shop' | 'settings'
 
-interface SkinColors {
+export interface SkinColors {
   body: string
   shade: string
   ear: string
@@ -12,7 +12,7 @@ interface SkinColors {
   belly: string
 }
 
-const SKINS: Record<string, SkinColors> = {
+export const SKINS: Record<string, SkinColors> = {
   pink:  { body: '#ffc7e0', shade: '#ffb0d4', ear: '#ff9ec7', earIn: '#ff7fb3', belly: '#fff4fa' },
   cream: { body: '#ffe9c9', shade: '#ffd9a6', ear: '#ffc987', earIn: '#ffb066', belly: '#fff8ec' },
   gray:  { body: '#d8d8e8', shade: '#c2c2d6', ear: '#b6b6cc', earIn: '#9a9ab2', belly: '#f3f3fb' },
