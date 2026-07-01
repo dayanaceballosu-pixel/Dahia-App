@@ -12,6 +12,13 @@ export type CatPresence = 'full' | 'medium' | 'low'
 /** Moneda de una cuenta. Si falta = pesos colombianos (cuentas viejas). */
 export type Currency = 'COP' | 'USD'
 
+/** Tipo de cuenta:
+ *  - 'normal': cuenta real (Nequi, efectivo…) → cuenta en el Saldo total.
+ *  - 'person': cuenta de persona/deuda → NO toca el Saldo total; va aparte.
+ *    El signo del saldo dice la dirección: (+) te deben, (−) le debes.
+ *    Al llegar a 0 se archiva sola. Si falta = 'normal' (cuentas viejas). */
+export type AccountKind = 'normal' | 'person'
+
 export interface Profile {
   userName: string          // "Dahia"
   catName: string           // se elige en el onboarding
@@ -28,6 +35,7 @@ export interface Account {
   emoji: string             // emoji libre del teclado
   color: string             // hex de la paleta ('' = color por defecto)
   currency?: Currency       // moneda de la cuenta (falta = 'COP')
+  kind?: AccountKind        // 'person' = deuda/persona (falta = 'normal')
   archived: boolean
   /** eliminada: se oculta de todos lados PERO sus movimientos quedan como
    *  historial (se conserva el registro para poder mostrar el nombre). */
@@ -39,6 +47,16 @@ export interface Account {
 /** Moneda efectiva de una cuenta (las viejas, sin campo, son COP). */
 export function accountCurrency(a: Account): Currency {
   return a.currency ?? 'COP'
+}
+
+/** Tipo efectivo de una cuenta (las viejas, sin campo, son 'normal'). */
+export function accountKind(a: Account): AccountKind {
+  return a.kind ?? 'normal'
+}
+
+/** ¿Es una cuenta de persona/deuda? */
+export function isPersonAccount(a: Account): boolean {
+  return accountKind(a) === 'person'
 }
 
 /** Categoría = bolsa COMPARTIDA (no atada a ingreso/gasto). */

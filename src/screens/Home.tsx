@@ -9,8 +9,8 @@ import Money from '../components/Money'
 import MovementRow from '../components/MovementRow'
 import { useSheets } from '../components/SheetsContext'
 import { effectiveLook } from '../data/shop'
-import { totalsByCurrency, pendingTransfers, sortedDesc } from '../data/selectors'
-import { accountCurrency } from '../data/types'
+import { totalsByCurrency, pendingTransfers, sortedDesc, debtSummary } from '../data/selectors'
+import { accountCurrency, isPersonAccount } from '../data/types'
 import { weekProgress } from '../data/tokens'
 import { pendingCount, duePopupReminders } from '../data/reminders'
 import { localDayKey } from '../lib/date'
@@ -35,6 +35,11 @@ export default function Home() {
     [accounts],
   )
   const pendings = useMemo(() => pendingTransfers(movements), [movements])
+  const realCount = useMemo(
+    () => accounts.filter((a) => !a.archived && !a.deleted && !isPersonAccount(a)).length,
+    [accounts],
+  )
+  const debts = useMemo(() => debtSummary(accounts, movements), [accounts, movements])
   const tokWeek = useMemo(() => weekProgress(tokenEntries, workStats, 0), [tokenEntries, workStats])
   const remPending = useMemo(() => pendingCount(reminders), [reminders])
   const dueNow = useMemo(() => duePopupReminders(reminders).length, [reminders])
@@ -119,12 +124,26 @@ export default function Home() {
           </div>
         )}
         <p className="balancecard__sub">
-          {accounts.filter((a) => !a.archived).length} cuenta
-          {accounts.filter((a) => !a.archived).length === 1 ? '' : 's'} activa
-          {accounts.filter((a) => !a.archived).length === 1 ? '' : 's'}
+          {realCount} cuenta{realCount === 1 ? '' : 's'} activa{realCount === 1 ? '' : 's'}
           {hasUSD ? ' · pesos y dólares por separado' : ''}
         </p>
       </section>
+
+      {/* Deudas y préstamos (personas) — no cuentan en el Saldo total */}
+      {(debts.owed > 0 || debts.debt > 0) && (
+        <button className="pendingcard" onClick={() => navigate('/cuentas')}>
+          <span className="pendingcard__ic">🤝</span>
+          <span className="grow">
+            <b>Deudas y préstamos</b>
+            <span className="dailycard__sub">
+              {debts.owed > 0 && <>Te deben <Money value={debts.owed} /></>}
+              {debts.owed > 0 && debts.debt > 0 && ' · '}
+              {debts.debt > 0 && <>Debes <Money value={debts.debt} /></>}
+            </span>
+          </span>
+          <span className="pendingcard__cta">Ver</span>
+        </button>
+      )}
 
       {/* Transferencias en camino (pendientes de confirmar) */}
       {pendings.length > 0 && (

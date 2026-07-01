@@ -1,4 +1,4 @@
-import { accountDelta, accountCurrency, countsInStats, transferInAmount } from './types'
+import { accountDelta, accountCurrency, countsInStats, isPersonAccount, transferInAmount } from './types'
 import type { Account, Currency, ID, Movement } from './types'
 
 /** Movimientos ordenados cronológicamente (viejo → nuevo). */
@@ -41,10 +41,29 @@ export function totalsByCurrency(accounts: Account[], movements: Movement[]): Cu
   const balances = allBalances(movements)
   const totals: CurrencyTotals = { COP: 0, USD: 0 }
   for (const a of accounts) {
-    if (a.archived || a.deleted) continue
+    if (a.archived || a.deleted || isPersonAccount(a)) continue // las personas van aparte
     totals[accountCurrency(a)] += balances.get(a.id) ?? 0
   }
   return totals
+}
+
+/** Resumen de deudas (cuentas de persona activas):
+ *  te deben = saldos en positivo, debes = |saldos en negativo|. En COP. */
+export interface DebtSummary {
+  owed: number   // te deben (centavos, ≥ 0)
+  debt: number   // le debes (centavos, ≥ 0)
+}
+export function debtSummary(accounts: Account[], movements: Movement[]): DebtSummary {
+  const balances = allBalances(movements)
+  let owed = 0
+  let debt = 0
+  for (const a of accounts) {
+    if (a.archived || a.deleted || !isPersonAccount(a)) continue
+    const bal = balances.get(a.id) ?? 0
+    if (bal > 0) owed += bal
+    else if (bal < 0) debt += -bal
+  }
+  return { owed, debt }
 }
 
 /** Transferencias pendientes (dinero que salió pero aún no ha llegado). */
@@ -52,12 +71,12 @@ export function pendingTransfers(movements: Movement[]): Movement[] {
   return movements.filter((m) => m.type === 'transfer' && m.pending)
 }
 
-/** Saldo total (sólo cuentas no archivadas). */
+/** Saldo total (sólo cuentas reales no archivadas; las personas van aparte). */
 export function totalBalance(accounts: Account[], movements: Movement[]): number {
   const balances = allBalances(movements)
   let total = 0
   for (const a of accounts) {
-    if (!a.archived && !a.deleted) total += balances.get(a.id) ?? 0
+    if (!a.archived && !a.deleted && !isPersonAccount(a)) total += balances.get(a.id) ?? 0
   }
   return total
 }

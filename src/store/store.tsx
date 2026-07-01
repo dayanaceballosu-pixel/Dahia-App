@@ -12,6 +12,7 @@ import type { DataProvider } from '../data/provider'
 import { LocalProvider } from '../data/localProvider'
 import type {
   Account,
+  AccountKind,
   Category,
   Currency,
   DataSnapshot,
@@ -25,6 +26,8 @@ import type {
   TokenEntry,
   WorkStats,
 } from '../data/types'
+import { accountKind } from '../data/types'
+import { allBalances } from '../data/selectors'
 import { emptySnapshot } from '../data/seed'
 import { FREE_DEFAULTS, isUnlocked, itemById, inSeason, SHOP_ITEMS } from '../data/shop'
 import { lockGoalsMet, goalsMet as computeGoalsMet } from '../data/tokens'
@@ -69,7 +72,7 @@ interface AppContextValue {
   updateProfile: (patch: Partial<Profile>) => void
 
   // cuentas
-  addAccount: (data: { name: string; emoji: string; color: string; currency?: Currency }) => Account
+  addAccount: (data: { name: string; emoji: string; color: string; currency?: Currency; kind?: AccountKind }) => Account
   updateAccount: (account: Account) => void
   archiveAccount: (id: ID, archived: boolean) => void
   deleteAccount: (id: ID) => void
@@ -154,13 +157,14 @@ export function AppProvider({
 
   /* -------- cuentas -------- */
   const addAccount = useCallback(
-    (data: { name: string; emoji: string; color: string; currency?: Currency }) => {
+    (data: { name: string; emoji: string; color: string; currency?: Currency; kind?: AccountKind }) => {
       const account: Account = {
         id: uid('acc'),
         name: data.name.trim(),
         emoji: data.emoji || '💼',
         color: data.color || '',
         currency: data.currency ?? 'COP',
+        kind: data.kind ?? 'normal',
         archived: false,
         order: Date.now(),
         createdAt: Date.now(),
@@ -254,6 +258,32 @@ export function AppProvider({
   )
 
   /* -------- movimientos -------- */
+  // Tras cualquier cambio de movimientos, mantener el estado de las cuentas de
+  // persona: si ya se usaron y quedaron en 0 → se archivan solas (deuda saldada);
+  // si vuelven a tener saldo → se desarchivan. Las cuentas normales no se tocan.
+  const reconcilePersons = useCallback(
+    (s: DataSnapshot): DataSnapshot => {
+      const balances = allBalances(s.movements)
+      const used = new Set<ID>()
+      for (const m of s.movements) {
+        used.add(m.accountId)
+        if (m.toAccountId) used.add(m.toAccountId)
+      }
+      let changed = false
+      const accounts = s.accounts.map((a) => {
+        if (accountKind(a) !== 'person' || a.deleted) return a
+        const settled = used.has(a.id) && (balances.get(a.id) ?? 0) === 0
+        if (settled === a.archived) return a
+        changed = true
+        const next = { ...a, archived: settled }
+        provider.upsertAccount(next)
+        return next
+      })
+      return changed ? { ...s, accounts } : s
+    },
+    [provider],
+  )
+
   const addMovement = useCallback(
     (input: NewMovementInput) => {
       const movement: Movement = {
@@ -272,34 +302,34 @@ export function AppProvider({
       }
       setSnap((s) => {
         provider.upsertMovement(movement)
-        return { ...s, movements: [...s.movements, movement] }
+        return reconcilePersons({ ...s, movements: [...s.movements, movement] })
       })
       return movement
     },
-    [provider],
+    [provider, reconcilePersons],
   )
 
   const updateMovement = useCallback(
     (movement: Movement) => {
       setSnap((s) => {
         provider.upsertMovement(movement)
-        return {
+        return reconcilePersons({
           ...s,
           movements: s.movements.map((m) => (m.id === movement.id ? movement : m)),
-        }
+        })
       })
     },
-    [provider],
+    [provider, reconcilePersons],
   )
 
   const deleteMovement = useCallback(
     (id: ID) => {
       setSnap((s) => {
         provider.removeMovement(id)
-        return { ...s, movements: s.movements.filter((m) => m.id !== id) }
+        return reconcilePersons({ ...s, movements: s.movements.filter((m) => m.id !== id) })
       })
     },
-    [provider],
+    [provider, reconcilePersons],
   )
 
   /* -------- tokens de trabajo + metas semanales -------- */

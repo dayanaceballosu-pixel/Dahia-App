@@ -2,13 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../store/store'
 import Money from '../components/Money'
 import Sheet from '../components/ui/Sheet'
-import { allBalances } from '../data/selectors'
+import { allBalances, debtSummary } from '../data/selectors'
 import { PALETTE } from '../data/seed'
 import { lastEmoji } from '../lib/emoji'
 import { parseAmountToCents } from '../lib/money'
 import {
   accountCurrency,
+  accountKind,
+  isPersonAccount,
   type Account,
+  type AccountKind,
   type Currency,
   type PaymentReminder,
   type ReminderFreq,
@@ -52,10 +55,13 @@ export default function Accounts() {
   const balances = useMemo(() => allBalances(movements), [movements])
 
   const active = accounts.filter((a) => !a.archived && !a.deleted).sort((a, b) => a.order - b.order)
+  const normalActive = active.filter((a) => !isPersonAccount(a))
+  const persons = active.filter((a) => isPersonAccount(a))
   const archived = accounts.filter((a) => a.archived && !a.deleted)
+  const debts = useMemo(() => debtSummary(accounts, movements), [accounts, movements])
 
   const [editing, setEditing] = useState<Account | null>(null)
-  const [creating, setCreating] = useState(false)
+  const [createKind, setCreateKind] = useState<AccountKind | null>(null)
   const [editRem, setEditRem] = useState<PaymentReminder | null>(null)
   const [creatingRem, setCreatingRem] = useState(false)
 
@@ -69,22 +75,22 @@ export default function Accounts() {
           <h1>Cuentas 💳</h1>
           <p className="screen-sub">Dónde tienes tu plata</p>
         </div>
-        <button className="iconbtn" onClick={() => setCreating(true)} aria-label="Nueva cuenta">
+        <button className="iconbtn" onClick={() => setCreateKind('normal')} aria-label="Nueva cuenta">
           ＋
         </button>
       </div>
 
-      {active.length === 0 ? (
+      {normalActive.length === 0 ? (
         <div className="card empty">
           <h3>Aún no tienes cuentas 🐱</h3>
           <p>Crea tu primera cuenta: Nequi, Efectivo, Bancolombia… la que uses.</p>
-          <button className="btn btn--primary btn--block" style={{ marginTop: 14 }} onClick={() => setCreating(true)}>
+          <button className="btn btn--primary btn--block" style={{ marginTop: 14 }} onClick={() => setCreateKind('normal')}>
             Crear cuenta
           </button>
         </div>
       ) : (
         <div className="list">
-          {active.map((a) => {
+          {normalActive.map((a) => {
             const bal = balances.get(a.id) ?? 0
             return (
               <button key={a.id} className="row" onClick={() => setEditing(a)} style={{ textAlign: 'left', width: '100%' }}>
@@ -109,6 +115,57 @@ export default function Accounts() {
           })}
         </div>
       )}
+
+      {/* Personas / deudas — no cuentan en el Saldo total */}
+      <section className="stack" style={{ gap: 10, marginTop: 14 }}>
+        <div className="spread">
+          <span className="t-title">👤 Personas / deudas</span>
+          <button className="chip" onClick={() => setCreateKind('person')}>＋ Nueva</button>
+        </div>
+
+        {persons.length === 0 ? (
+          <div className="card empty" style={{ padding: '16px 16px' }}>
+            <p style={{ margin: 0 }}>
+              ¿Alguien te debe o le debes? Crea una persona. En <b>+</b> te deben, en <b>−</b> le
+              debes. Al saldar la deuda (llegar a $0) se archiva sola. 🤝
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="debtsum">
+              <span className="debtsum__item debtsum__item--owed">
+                Te deben <b><Money value={debts.owed} /></b>
+              </span>
+              <span className="debtsum__item debtsum__item--debt">
+                Debes <b><Money value={debts.debt} /></b>
+              </span>
+            </div>
+            <div className="list">
+              {persons.map((a) => {
+                const bal = balances.get(a.id) ?? 0
+                const owed = bal > 0
+                return (
+                  <button key={a.id} className="row" onClick={() => setEditing(a)} style={{ textAlign: 'left', width: '100%' }}>
+                    <span
+                      className="row__icon"
+                      style={{ background: a.color ? hexTint(a.color) : 'var(--primary-tint)' }}
+                    >
+                      {a.emoji}
+                    </span>
+                    <span className="row__main">
+                      <span className="row__title">{a.name}</span>
+                      <span className="row__sub">{owed ? 'Te debe' : bal < 0 ? 'Le debes' : 'Saldado'}</span>
+                    </span>
+                    <span className="row__right" style={{ color: bal < 0 ? 'var(--expense)' : 'var(--income)' }}>
+                      <Money value={bal} currency={accountCurrency(a)} />
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
+      </section>
 
       {archived.length > 0 && (
         <details className="archived">
@@ -188,10 +245,17 @@ export default function Accounts() {
       </section>
 
       <AccountEditor
-        open={creating}
-        onClose={() => setCreating(false)}
+        open={createKind !== null}
+        initialKind={createKind ?? 'normal'}
+        onClose={() => setCreateKind(null)}
         onSave={(data) => {
-          const acc = addAccount({ name: data.name, emoji: data.emoji, color: data.color, currency: data.currency })
+          const acc = addAccount({
+            name: data.name,
+            emoji: data.emoji,
+            color: data.color,
+            currency: data.currency,
+            kind: data.kind,
+          })
           if (data.initialCents !== 0) {
             addMovement({
               type: 'adjust',
@@ -201,7 +265,7 @@ export default function Accounts() {
               note: 'Saldo inicial',
             })
           }
-          setCreating(false)
+          setCreateKind(null)
         }}
       />
 
@@ -471,6 +535,7 @@ function ReminderEditor({
 function AccountEditor({
   open,
   account,
+  initialKind = 'normal',
   balance = 0,
   onClose,
   onSave,
@@ -479,22 +544,29 @@ function AccountEditor({
 }: {
   open: boolean
   account?: Account
+  initialKind?: AccountKind
   balance?: number
   onClose: () => void
-  onSave: (data: { name: string; emoji: string; color: string; currency: Currency; initialCents: number }) => void
+  onSave: (data: { name: string; emoji: string; color: string; currency: Currency; kind: AccountKind; initialCents: number }) => void
   onArchive?: () => void
   onDelete?: () => void
 }) {
+  // tipo de la cuenta que se está creando/editando (fijo al editar)
+  const kind: AccountKind = account ? accountKind(account) : initialKind
+  const isPerson = kind === 'person'
+
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState('💵')
   const [color, setColor] = useState('')
   const [currency, setCurrency] = useState<Currency>('COP')
   const [balRaw, setBalRaw] = useState('')
+  const [sign, setSign] = useState<'pos' | 'neg'>('pos') // solo persona: + te deben / − le debes
 
   useEffect(() => {
     if (open) {
       setName(account?.name ?? '')
-      setEmoji(account?.emoji ?? EMOJI_SUGGEST[Math.floor(Math.random() * EMOJI_SUGGEST.length)])
+      setSign('pos')
+      setEmoji(account?.emoji ?? (isPerson ? '👤' : EMOJI_SUGGEST[Math.floor(Math.random() * EMOJI_SUGGEST.length)]))
       // sugerir un color si no tiene
       setColor(account?.color ?? PALETTE[Math.floor(Math.random() * PALETTE.length)])
       setCurrency(account ? accountCurrency(account) : 'COP')
@@ -502,22 +574,37 @@ function AccountEditor({
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const initialCents = parseAmountToCents(balRaw)
-  const missingBalance = !account && balRaw.trim() === ''
+  const rawCents = Math.abs(parseAmountToCents(balRaw))
+  const initialCents = isPerson && sign === 'neg' ? -rawCents : rawCents
+  // la persona puede quedar en 0 (deuda nueva que se llena con un traspaso)
+  const missingBalance = !account && !isPerson && balRaw.trim() === ''
+
+  const title = account
+    ? isPerson
+      ? 'Editar persona'
+      : 'Editar cuenta'
+    : isPerson
+      ? 'Nueva persona 👤'
+      : 'Nueva cuenta'
 
   return (
-    <Sheet open={open} onClose={onClose} title={account ? 'Editar cuenta' : 'Nueva cuenta'}>
+    <Sheet open={open} onClose={onClose} title={title}>
       <div className="stack">
         <div className="acc-preview">
           <span className="acc-preview__icon" style={{ background: color ? hexTint(color) : 'var(--primary-tint)' }}>
             {emoji || '💼'}
           </span>
-          <span className="acc-preview__name">{name || 'Nombre de la cuenta'}</span>
+          <span className="acc-preview__name">{name || (isPerson ? 'Nombre de la persona' : 'Nombre de la cuenta')}</span>
         </div>
 
         <div className="field">
           <label>Nombre</label>
-          <input className="input" placeholder="Ej: Nequi" value={name} onChange={(e) => setName(e.target.value)} />
+          <input
+            className="input"
+            placeholder={isPerson ? 'Ej: Camilo' : 'Ej: Nequi'}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </div>
 
         <div className="field">
@@ -564,41 +651,42 @@ function AccountEditor({
           </div>
         </div>
 
-        {!account ? (
-          <div className="field">
-            <label>Moneda</label>
-            <div className="rowflex" style={{ gap: 8 }}>
-              <button
-                type="button"
-                className={`chip ${currency === 'COP' ? 'chip--active' : ''}`}
-                onClick={() => setCurrency('COP')}
-              >
-                🇨🇴 Pesos (COP)
-              </button>
-              <button
-                type="button"
-                className={`chip ${currency === 'USD' ? 'chip--active' : ''}`}
-                onClick={() => setCurrency('USD')}
-              >
-                🇺🇸 Dólares (USD)
-              </button>
+        {!isPerson &&
+          (!account ? (
+            <div className="field">
+              <label>Moneda</label>
+              <div className="rowflex" style={{ gap: 8 }}>
+                <button
+                  type="button"
+                  className={`chip ${currency === 'COP' ? 'chip--active' : ''}`}
+                  onClick={() => setCurrency('COP')}
+                >
+                  🇨🇴 Pesos (COP)
+                </button>
+                <button
+                  type="button"
+                  className={`chip ${currency === 'USD' ? 'chip--active' : ''}`}
+                  onClick={() => setCurrency('USD')}
+                >
+                  🇺🇸 Dólares (USD)
+                </button>
+              </div>
+              <p className="screen-sub" style={{ paddingLeft: 2 }}>
+                Esta cuenta manejará solo <b>{currency === 'USD' ? 'dólares' : 'pesos'}</b>. No se puede
+                cambiar después.
+              </p>
             </div>
-            <p className="screen-sub" style={{ paddingLeft: 2 }}>
-              Esta cuenta manejará solo <b>{currency === 'USD' ? 'dólares' : 'pesos'}</b>. No se puede
-              cambiar después.
-            </p>
-          </div>
-        ) : (
-          <div className="field">
-            <label>Moneda</label>
-            <p className="screen-sub" style={{ paddingLeft: 2 }}>
-              {accountCurrency(account) === 'USD' ? '🇺🇸 Dólares (USD)' : '🇨🇴 Pesos (COP)'} — no se
-              puede cambiar.
-            </p>
-          </div>
-        )}
+          ) : (
+            <div className="field">
+              <label>Moneda</label>
+              <p className="screen-sub" style={{ paddingLeft: 2 }}>
+                {accountCurrency(account) === 'USD' ? '🇺🇸 Dólares (USD)' : '🇨🇴 Pesos (COP)'} — no se
+                puede cambiar.
+              </p>
+            </div>
+          ))}
 
-        {!account && (
+        {!account && !isPerson && (
           <div className="field">
             <label>Saldo inicial</label>
             <input
@@ -621,12 +709,55 @@ function AccountEditor({
           </div>
         )}
 
+        {!account && isPerson && (
+          <div className="field">
+            <label>¿Ya hay una deuda? (opcional)</label>
+            <div className="rowflex" style={{ gap: 8 }}>
+              <button
+                type="button"
+                className={`chip ${sign === 'pos' ? 'chip--active' : ''}`}
+                onClick={() => setSign('pos')}
+              >
+                ➕ Me debe
+              </button>
+              <button
+                type="button"
+                className={`chip ${sign === 'neg' ? 'chip--active' : ''}`}
+                onClick={() => setSign('neg')}
+              >
+                ➖ Le debo
+              </button>
+            </div>
+            <input
+              className="input"
+              inputMode="decimal"
+              placeholder="0"
+              value={balRaw}
+              onChange={(e) => setBalRaw(e.target.value)}
+              style={{ marginTop: 8 }}
+            />
+            <p className="screen-sub" style={{ paddingLeft: 2 }}>
+              {rawCents !== 0 ? (
+                sign === 'neg' ? (
+                  <>Le debes <Money value={rawCents} />.</>
+                ) : (
+                  <>Te debe <Money value={rawCents} />.</>
+                )
+              ) : (
+                <>Déjalo en <b>0</b> si la deuda nace con un traspaso (ej: le prestas ahora).</>
+              )}
+              <br />
+              No cuenta en tu Saldo total ni en tus estadísticas.
+            </p>
+          </div>
+        )}
+
         <button
           className="btn btn--primary btn--block"
           disabled={!name.trim() || missingBalance}
-          onClick={() => onSave({ name, emoji, color, currency, initialCents })}
+          onClick={() => onSave({ name, emoji, color, currency, kind, initialCents })}
         >
-          {account ? 'Guardar cambios' : 'Crear cuenta'}
+          {account ? 'Guardar cambios' : isPerson ? 'Crear persona' : 'Crear cuenta'}
         </button>
 
         {account && onArchive && balance === 0 && (

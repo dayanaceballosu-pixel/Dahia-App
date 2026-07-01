@@ -29,7 +29,20 @@ const TYPE_META: Record<
 }
 
 export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
-  const { accounts, categories, addMovement, updateMovement, deleteMovement, addCategory } = useApp()
+  const { accounts, categories, addMovement, updateMovement, deleteMovement, addCategory, addAccount } =
+    useApp()
+
+  // Crea una cuenta de persona/deuda al vuelo (en $0) y la deja seleccionada.
+  function createPerson(name: string, select: (id: string) => void) {
+    const acc = addAccount({
+      name,
+      emoji: '👤',
+      color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
+      currency: 'COP',
+      kind: 'person',
+    })
+    select(acc.id)
+  }
   const navigate = useNavigate()
   const active = useMemo(() => accounts.filter((a) => !a.archived && !a.deleted), [accounts])
   // para elegir/buscar: incluye archivadas (activas primero), nunca eliminadas
@@ -233,7 +246,12 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
               {/* Cuenta */}
               <div className="field">
                 <label>{type === 'transfer' ? 'Desde' : 'Cuenta'}</label>
-                <AccountPicker accounts={pickAccounts} value={accountId} onChange={setAccountId} />
+                <AccountPicker
+                  accounts={pickAccounts}
+                  value={accountId}
+                  onChange={setAccountId}
+                  onCreate={(name) => createPerson(name, setAccountId)}
+                />
               </div>
 
               {/* Transfer destino */}
@@ -245,6 +263,7 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
                     value={toAccountId}
                     onChange={setToAccountId}
                     exclude={accountId}
+                    onCreate={(name) => createPerson(name, setToAccountId)}
                   />
                 </div>
               )}
@@ -383,11 +402,13 @@ function AccountPicker({
   value,
   onChange,
   exclude,
+  onCreate,
 }: {
   accounts: { id: string; name: string; emoji: string; archived?: boolean }[]
   value: string
   onChange: (id: string) => void
   exclude?: string
+  onCreate?: (name: string) => void
 }) {
   const [q, setQ] = useState('')
   const [openList, setOpenList] = useState(false)
@@ -395,6 +416,7 @@ function AccountPicker({
   const selected = options.find((a) => a.id === value)
   const needle = q.trim().toLowerCase()
   const filtered = needle ? options.filter((a) => a.name.toLowerCase().includes(needle)) : options
+  const exact = accounts.some((a) => a.name.toLowerCase() === needle)
 
   if (selected && !openList) {
     return (
@@ -435,6 +457,18 @@ function AccountPicker({
             {a.archived && <span className="curtag">archivada</span>}
           </button>
         ))}
+        {onCreate && q.trim() && !exact && (
+          <button
+            className="catpicker__opt catpicker__create"
+            onClick={() => {
+              onCreate(q.trim())
+              setOpenList(false)
+              setQ('')
+            }}
+          >
+            ➕ Crear persona «{q.trim()}»
+          </button>
+        )}
       </div>
     </div>
   )
