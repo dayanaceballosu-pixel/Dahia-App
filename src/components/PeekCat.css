@@ -2,6 +2,7 @@
 .peekcat {
   position: relative;
   z-index: 2;
+  align-self: center;
   display: flex;
   flex-direction: column;
   align-items: center;

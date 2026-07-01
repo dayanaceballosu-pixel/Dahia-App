@@ -351,7 +351,7 @@ function ReminderEditor({
               placeholder="Ej: Arriendo, Netflix, Luz…"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              style={{ flex: 1 }}
+              style={{ flex: 1, minWidth: 0 }}
               autoFocus
             />
           </div>

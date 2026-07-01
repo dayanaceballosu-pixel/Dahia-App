@@ -167,13 +167,16 @@
   align-items: flex-end;
   justify-content: center;
 }
-/* columna que apila el gatito chismoso encima de la hoja */
+/* columna que apila el gatito chismoso encima de la hoja.
+   align-items: stretch para que la hoja ocupe TODO el ancho y no se
+   centre-recorte cuando el contenido es un poco más ancho. El gatito
+   se centra por su cuenta (align-self). */
 .sheet-stack {
   width: 100%;
   max-width: var(--maxw);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
 }
 .sheet {
   position: relative;

@@ -259,7 +259,7 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
                       placeholder="0"
                       value={amountToRaw}
                       onChange={(e) => setAmountToRaw(e.target.value)}
-                      style={{ flex: 1 }}
+                      style={{ flex: 1, minWidth: 0 }}
                     />
                   </div>
                   <p className="addform__hint">
