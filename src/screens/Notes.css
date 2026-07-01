@@ -86,6 +86,7 @@
   flex-direction: column;
   align-items: center;
 }
+.notes-empty__ic { font-size: 52px; line-height: 1; }
 .notes-empty h3 { font-size: 17px; margin: 8px 0 2px; }
 
 /* selector de color en el editor */

@@ -29,6 +29,9 @@ export interface Account {
   color: string             // hex de la paleta ('' = color por defecto)
   currency?: Currency       // moneda de la cuenta (falta = 'COP')
   archived: boolean
+  /** eliminada: se oculta de todos lados PERO sus movimientos quedan como
+   *  historial (se conserva el registro para poder mostrar el nombre). */
+  deleted?: boolean
   order: number
   createdAt: number
 }

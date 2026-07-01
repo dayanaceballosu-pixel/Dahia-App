@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import './cat.css'
 
 export type CatMood = 'idle' | 'happy' | 'sad' | 'celebrate' | 'sleep'
-export type CatContext = 'home' | 'accounts' | 'movements' | 'stats' | 'shop' | 'settings'
+export type CatContext = 'home' | 'accounts' | 'movements' | 'stats' | 'shop' | 'settings' | 'notes'
 
 export interface SkinColors {
   body: string
@@ -59,6 +59,7 @@ const CONTEXT_DECOR: Record<CatContext, string | null> = {
   stats: '📊',
   shop: '🛍️',
   settings: '🔧',
+  notes: '📝',
 }
 
 interface CatProps {

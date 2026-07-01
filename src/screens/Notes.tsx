@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store/store'
-import Cat from '../components/Cat/Cat'
-import CatStage from '../components/Cat/CatStage'
 import Sheet from '../components/ui/Sheet'
-import { effectiveLook } from '../data/shop'
 import { uid } from '../lib/id'
 import type { Note, NoteColor, NoteItem } from '../data/types'
 import './Notes.css'
@@ -25,15 +22,10 @@ function tilt(id: string): number {
 }
 
 export default function Notes() {
-  const { notes, gamification, goalsMet, addNote, updateNote, deleteNote } = useApp()
+  const { notes, addNote, updateNote, deleteNote } = useApp()
   const navigate = useNavigate()
   const [editing, setEditing] = useState<Note | null>(null)
   const [creating, setCreating] = useState(false)
-
-  const look = useMemo(
-    () => effectiveLook(gamification, new Date().getMonth() + 1, goalsMet),
-    [gamification, goalsMet],
-  )
 
   const sorted = useMemo(
     () =>
@@ -70,11 +62,9 @@ export default function Notes() {
 
       {sorted.length === 0 ? (
         <div className="notes-empty">
-          <CatStage background={look.background} size={150}>
-            <Cat size={120} mood="happy" equipped={look.equipped} skin={look.skin} alive={false} />
-          </CatStage>
-          <h3>¿Qué anotamos hoy? 🐱✏️</h3>
-          <p className="screen-sub">Ideas, listas, pendientes… tu michi las cuida.</p>
+          <div className="notes-empty__ic">🎀</div>
+          <h3>¿Qué anotamos hoy?</h3>
+          <p className="screen-sub">Ideas, listas, pendientes… tu michi las cuida 🐱</p>
           <button className="btn btn--primary" style={{ marginTop: 12 }} onClick={() => setCreating(true)}>
             Crear mi primera notita
           </button>
@@ -209,7 +199,6 @@ function NoteEditor({
             placeholder="Ej: Ideas, Mercado, Pendientes…"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            autoFocus
           />
         </div>
 

@@ -12,6 +12,7 @@ import Shop from './screens/Shop'
 import Stats from './screens/Stats'
 import Tokens from './screens/Tokens'
 import Notes from './screens/Notes'
+import Configuracion from './screens/Configuracion'
 import Onboarding from './screens/Onboarding'
 import Login from './screens/Login'
 import NotFound from './screens/NotFound'
@@ -92,6 +93,7 @@ function ThemedApp() {
             <Route path="/movimientos" element={<Movements />} />
             <Route path="/cuentas" element={<Accounts />} />
             <Route path="/ajustes" element={<Settings />} />
+            <Route path="/configuracion" element={<Configuracion />} />
             <Route path="/tienda" element={<Shop />} />
             <Route path="/estadisticas" element={<Stats />} />
             <Route path="/tokens" element={<Tokens />} />

@@ -1,111 +1,48 @@
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store/store'
-import { useAuth } from '../firebase/AuthProvider'
-import type { ThemePref } from '../data/types'
-
-const THEMES: { value: ThemePref; label: string; emoji: string }[] = [
-  { value: 'light', label: 'Claro', emoji: '☀️' },
-  { value: 'dark', label: 'Oscuro', emoji: '🌙' },
-  { value: 'system', label: 'Auto', emoji: '🪄' },
-]
 
 export default function Settings() {
-  const { profile, updateProfile, gamification } = useApp()
-  const { user, signOutUser } = useAuth()
+  const { gamification } = useApp()
   const navigate = useNavigate()
+
+  const rows: { icon: string; title: string; sub: string; to: string; pill?: boolean }[] = [
+    { icon: '🐱', title: 'Mi Gatito', sub: 'Vístelo, ponle nombre y más 🎀', to: '/tienda', pill: true },
+    { icon: '✨', title: 'Mis Tokens', sub: 'Registro de trabajo y metas 🎯', to: '/tokens' },
+    { icon: '🎀', title: 'Notitas', sub: 'Tus ideas, listas y recados 💭', to: '/notas' },
+    { icon: '📊', title: 'Estadísticas', sub: 'En qué entra y sale tu plata', to: '/estadisticas' },
+    { icon: '⚙️', title: 'Ajustes', sub: 'Apariencia, cuenta y más', to: '/configuracion' },
+  ]
 
   return (
     <main className="screen">
       <div className="screen-head">
         <div>
-          <h1>Ajustes ⚙️</h1>
-          <p className="screen-sub">Tu app, a tu manera</p>
+          <h1>Más 🌸</h1>
+          <p className="screen-sub">Todo tu michi-mundo en un lugar</p>
         </div>
       </div>
 
-      {/* Accesos */}
       <div className="list">
-        <button className="row" onClick={() => navigate('/tienda')} style={{ width: '100%', textAlign: 'left' }}>
-          <span className="row__icon">🐱</span>
-          <span className="row__main">
-            <span className="row__title">Mi Gatito</span>
-            <span className="row__sub">Vístelo, ponle nombre y más 🎀</span>
-          </span>
-          <span className="streakpill">🔥 <b>{gamification.bestStreak ?? 0}</b></span>
-        </button>
-        <button className="row" onClick={() => navigate('/estadisticas')} style={{ width: '100%', textAlign: 'left' }}>
-          <span className="row__icon">📊</span>
-          <span className="row__main">
-            <span className="row__title">Estadísticas</span>
-            <span className="row__sub">En qué entra y sale tu plata</span>
-          </span>
-          <span className="row__right">›</span>
-        </button>
-        <button className="row" onClick={() => navigate('/tokens')} style={{ width: '100%', textAlign: 'left' }}>
-          <span className="row__icon">✨</span>
-          <span className="row__main">
-            <span className="row__title">Mis Tokens</span>
-            <span className="row__sub">Registro de trabajo y metas 🎯</span>
-          </span>
-          <span className="row__right">›</span>
-        </button>
-        <button className="row" onClick={() => navigate('/notas')} style={{ width: '100%', textAlign: 'left' }}>
-          <span className="row__icon">🎀</span>
-          <span className="row__main">
-            <span className="row__title">Notitas</span>
-            <span className="row__sub">Tus ideas, listas y recados 💭</span>
-          </span>
-          <span className="row__right">›</span>
-        </button>
+        {rows.map((r) => (
+          <button
+            key={r.to}
+            className="row"
+            onClick={() => navigate(r.to)}
+            style={{ width: '100%', textAlign: 'left' }}
+          >
+            <span className="row__icon">{r.icon}</span>
+            <span className="row__main">
+              <span className="row__title">{r.title}</span>
+              <span className="row__sub">{r.sub}</span>
+            </span>
+            {r.pill ? (
+              <span className="streakpill">🔥 <b>{gamification.bestStreak ?? 0}</b></span>
+            ) : (
+              <span className="row__right">›</span>
+            )}
+          </button>
+        ))}
       </div>
-
-      {/* Tema */}
-      <section className="card stack">
-        <p className="t-label">Apariencia</p>
-        <div className="rowflex" style={{ gap: 8 }}>
-          {THEMES.map((t) => (
-            <button
-              key={t.value}
-              className={`chip ${profile.theme === t.value ? 'chip--active' : ''}`}
-              onClick={() => updateProfile({ theme: t.value })}
-            >
-              {t.emoji} {t.label}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Racha */}
-      <section className="card spread">
-        <span className="grow">
-          <b style={{ fontSize: 14 }}>Tu racha 🔥</b>
-          <p className="screen-sub">
-            Actual: {gamification.streak} {gamification.streak === 1 ? 'día' : 'días'} · récord:{' '}
-            {gamification.bestStreak ?? 0}
-          </p>
-        </span>
-        <span className="streakpill">🔥 <b>{gamification.streak}</b></span>
-      </section>
-
-      {/* Cuenta */}
-      <section className="card stack">
-        <p className="t-label">Cuenta</p>
-        {user?.email && (
-          <p className="screen-sub" style={{ marginBottom: 4 }}>
-            Sesión iniciada como <b>{user.email}</b>. Tus datos se guardan de forma privada.
-          </p>
-        )}
-        <button
-          className="btn btn--ghost btn--block"
-          onClick={() => {
-            if (confirm('¿Cerrar sesión? Podrás volver a entrar con tu cuenta de Google.')) {
-              signOutUser()
-            }
-          }}
-        >
-          🚪 Cerrar sesión
-        </button>
-      </section>
 
       <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-faint)', marginTop: 4 }}>
         Dahia App · hecha con 💗

@@ -31,7 +31,15 @@ const TYPE_META: Record<
 export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
   const { accounts, categories, addMovement, updateMovement, deleteMovement, addCategory } = useApp()
   const navigate = useNavigate()
-  const active = useMemo(() => accounts.filter((a) => !a.archived), [accounts])
+  const active = useMemo(() => accounts.filter((a) => !a.archived && !a.deleted), [accounts])
+  // para elegir/buscar: incluye archivadas (activas primero), nunca eliminadas
+  const pickAccounts = useMemo(
+    () =>
+      accounts
+        .filter((a) => !a.deleted)
+        .sort((a, b) => Number(!!a.archived) - Number(!!b.archived) || a.order - b.order),
+    [accounts],
+  )
   const isEdit = !!edit
 
   const [step, setStep] = useState<Step>('type')
@@ -80,8 +88,8 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
   const meta = TYPE_META[type]
   const needsCategory = type === 'income' || type === 'expense'
 
-  const srcAcc = active.find((a) => a.id === accountId)
-  const dstAcc = active.find((a) => a.id === toAccountId)
+  const srcAcc = accounts.find((a) => a.id === accountId)
+  const dstAcc = accounts.find((a) => a.id === toAccountId)
   const srcCur = srcAcc ? accountCurrency(srcAcc) : 'COP'
   const dstCur = dstAcc ? accountCurrency(dstAcc) : 'COP'
   // transferencia entre monedas distintas → pide "cuánto llega" y queda pendiente
@@ -210,7 +218,6 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
                   placeholder="0"
                   value={amountRaw}
                   onChange={(e) => setAmountRaw(e.target.value)}
-                  autoFocus
                 />
               </div>
               {type === 'transfer' && (
@@ -226,21 +233,18 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
               {/* Cuenta */}
               <div className="field">
                 <label>{type === 'transfer' ? 'Desde' : 'Cuenta'}</label>
-                <AccountChips
-                  accounts={active}
-                  value={accountId}
-                  onChange={setAccountId}
-                />
+                <AccountPicker accounts={pickAccounts} value={accountId} onChange={setAccountId} />
               </div>
 
               {/* Transfer destino */}
               {type === 'transfer' && (
                 <div className="field">
                   <label>Hacia</label>
-                  <AccountChips
-                    accounts={active.filter((a) => a.id !== accountId)}
+                  <AccountPicker
+                    accounts={pickAccounts}
                     value={toAccountId}
                     onChange={setToAccountId}
+                    exclude={accountId}
                   />
                 </div>
               )}
@@ -373,26 +377,65 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
 }
 
 /* --------- Selector de cuenta en chips --------- */
-function AccountChips({
+/* --------- Selector de cuenta con búsqueda (incluye archivadas) --------- */
+function AccountPicker({
   accounts,
   value,
   onChange,
+  exclude,
 }: {
-  accounts: { id: string; name: string; emoji: string }[]
+  accounts: { id: string; name: string; emoji: string; archived?: boolean }[]
   value: string
   onChange: (id: string) => void
+  exclude?: string
 }) {
+  const [q, setQ] = useState('')
+  const [openList, setOpenList] = useState(false)
+  const options = accounts.filter((a) => a.id !== exclude)
+  const selected = options.find((a) => a.id === value)
+  const needle = q.trim().toLowerCase()
+  const filtered = needle ? options.filter((a) => a.name.toLowerCase().includes(needle)) : options
+
+  if (selected && !openList) {
+    return (
+      <button
+        className="cat-selected"
+        onClick={() => {
+          setOpenList(true)
+          setQ('')
+        }}
+      >
+        {selected.emoji} {selected.name}
+        {selected.archived && <span className="curtag">archivada</span>}
+        <span className="cat-selected__change">cambiar</span>
+      </button>
+    )
+  }
+
   return (
-    <div className="chips-scroll no-scrollbar">
-      {accounts.map((a) => (
-        <button
-          key={a.id}
-          className={`chip ${value === a.id ? 'chip--active' : ''}`}
-          onClick={() => onChange(a.id)}
-        >
-          {a.emoji} {a.name}
-        </button>
-      ))}
+    <div className="catpicker">
+      <input
+        className="input"
+        placeholder="Busca una cuenta…"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        onFocus={() => setOpenList(true)}
+      />
+      <div className="catpicker__list no-scrollbar">
+        {filtered.map((a) => (
+          <button
+            key={a.id}
+            className="catpicker__opt"
+            onClick={() => {
+              onChange(a.id)
+              setOpenList(false)
+            }}
+          >
+            {a.emoji} {a.name}
+            {a.archived && <span className="curtag">archivada</span>}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -449,7 +492,6 @@ function CategoryPicker({
         value={q}
         onChange={(e) => setQ(e.target.value)}
         onFocus={() => setOpenList(true)}
-        autoFocus={openList}
       />
       <div className="catpicker__list no-scrollbar">
         {filtered.map((c) => (

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useDragControls } from 'framer-motion'
-import { useEffect, useState, type FocusEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FocusEvent, type ReactNode } from 'react'
 
 interface SheetProps {
   open: boolean
@@ -13,13 +13,34 @@ interface SheetProps {
 export default function Sheet({ open, onClose, title, children, peek }: SheetProps) {
   const controls = useDragControls()
   const [kb, setKb] = useState(0) // alto del teclado (px) en iOS
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
-  // Bloquear scroll de fondo mientras está abierta
+  // Bloquear scroll de fondo mientras está abierta (html + body)
   useEffect(() => {
     if (!open) return
+    const prevBody = document.body.style.overflow
+    const prevHtml = document.documentElement.style.overflow
     document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
     return () => {
-      document.body.style.overflow = ''
+      document.body.style.overflow = prevBody
+      document.documentElement.style.overflow = prevHtml
+    }
+  }, [open])
+
+  // El botón "atrás" del celular CIERRA la hoja (en vez de irse de pantalla).
+  useEffect(() => {
+    if (!open) return
+    window.history.pushState({ dahiaSheet: true }, '')
+    const onPop = () => onCloseRef.current()
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      // si se cerró con botón/deslizar (no con "atrás"), quitamos la entrada que agregamos
+      if ((window.history.state as { dahiaSheet?: boolean } | null)?.dahiaSheet) {
+        window.history.back()
+      }
     }
   }, [open])
 

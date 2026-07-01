@@ -41,7 +41,7 @@ export function totalsByCurrency(accounts: Account[], movements: Movement[]): Cu
   const balances = allBalances(movements)
   const totals: CurrencyTotals = { COP: 0, USD: 0 }
   for (const a of accounts) {
-    if (a.archived) continue
+    if (a.archived || a.deleted) continue
     totals[accountCurrency(a)] += balances.get(a.id) ?? 0
   }
   return totals
@@ -57,7 +57,7 @@ export function totalBalance(accounts: Account[], movements: Movement[]): number
   const balances = allBalances(movements)
   let total = 0
   for (const a of accounts) {
-    if (!a.archived) total += balances.get(a.id) ?? 0
+    if (!a.archived && !a.deleted) total += balances.get(a.id) ?? 0
   }
   return total
 }

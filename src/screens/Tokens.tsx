@@ -350,7 +350,6 @@ function EntrySheet({
             placeholder="0"
             value={tokensRaw}
             onChange={(e) => setTokensRaw(e.target.value)}
-            autoFocus
           />
         </div>
 
@@ -417,7 +416,6 @@ function GoalSheet({
             placeholder="0"
             value={raw}
             onChange={(e) => setRaw(e.target.value)}
-            autoFocus
           />
         </div>
         <p className="screen-sub" style={{ paddingLeft: 2 }}>

@@ -13,6 +13,7 @@ export const ROUTE_CONTEXT: Record<string, CatContext> = {
   '/cuentas': 'accounts',
   '/estadisticas': 'stats',
   '/ajustes': 'settings',
+  '/notas': 'notes',
 }
 
 export default function BuddyCat({ context }: { context: CatContext }) {

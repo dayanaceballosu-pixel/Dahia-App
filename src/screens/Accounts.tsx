@@ -51,8 +51,8 @@ export default function Accounts() {
     movements.some((m) => m.accountId === id || m.toAccountId === id)
   const balances = useMemo(() => allBalances(movements), [movements])
 
-  const active = accounts.filter((a) => !a.archived).sort((a, b) => a.order - b.order)
-  const archived = accounts.filter((a) => a.archived)
+  const active = accounts.filter((a) => !a.archived && !a.deleted).sort((a, b) => a.order - b.order)
+  const archived = accounts.filter((a) => a.archived && !a.deleted)
 
   const [editing, setEditing] = useState<Account | null>(null)
   const [creating, setCreating] = useState(false)
@@ -208,7 +208,7 @@ export default function Accounts() {
       <AccountEditor
         open={!!editing}
         account={editing ?? undefined}
-        hasMovements={editing ? accountHasMovements(editing.id) : true}
+        balance={editing ? balances.get(editing.id) ?? 0 : 0}
         onClose={() => setEditing(null)}
         onSave={(data) => {
           if (editing)
@@ -224,13 +224,21 @@ export default function Accounts() {
         onArchive={
           editing
             ? () => {
-                if (accountHasMovements(editing.id)) {
-                  archiveAccount(editing.id, true)
-                  setEditing(null)
-                } else if (
-                  confirm('Esta cuenta no tiene movimientos. ¿Eliminarla del todo?')
-                ) {
-                  deleteAccount(editing.id)
+                archiveAccount(editing.id, true)
+                setEditing(null)
+              }
+            : undefined
+        }
+        onDelete={
+          editing
+            ? () => {
+                const hasMov = accountHasMovements(editing.id)
+                const msg = hasMov
+                  ? '¿Eliminar esta cuenta? Sus movimientos quedarán en tu historial, pero ya no podrás usarla.'
+                  : '¿Eliminar esta cuenta?'
+                if (confirm(msg)) {
+                  if (hasMov) updateAccount({ ...editing, deleted: true })
+                  else deleteAccount(editing.id)
                   setEditing(null)
                 }
               }
@@ -352,7 +360,6 @@ function ReminderEditor({
               value={name}
               onChange={(e) => setName(e.target.value)}
               style={{ flex: 1, minWidth: 0 }}
-              autoFocus
             />
           </div>
           <div className="chips-scroll no-scrollbar" style={{ marginTop: 2 }}>
@@ -464,17 +471,19 @@ function ReminderEditor({
 function AccountEditor({
   open,
   account,
-  hasMovements = true,
+  balance = 0,
   onClose,
   onSave,
   onArchive,
+  onDelete,
 }: {
   open: boolean
   account?: Account
-  hasMovements?: boolean
+  balance?: number
   onClose: () => void
   onSave: (data: { name: string; emoji: string; color: string; currency: Currency; initialCents: number }) => void
   onArchive?: () => void
+  onDelete?: () => void
 }) {
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState('💵')
@@ -508,7 +517,7 @@ function AccountEditor({
 
         <div className="field">
           <label>Nombre</label>
-          <input className="input" placeholder="Ej: Nequi" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+          <input className="input" placeholder="Ej: Nequi" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
 
         <div className="field">
@@ -620,9 +629,19 @@ function AccountEditor({
           {account ? 'Guardar cambios' : 'Crear cuenta'}
         </button>
 
-        {onArchive && (
+        {account && onArchive && balance === 0 && (
           <button className="btn btn--ghost btn--block" onClick={onArchive}>
-            {hasMovements ? '🗄️ Archivar cuenta' : '🗑️ Eliminar cuenta'}
+            🗄️ Archivar cuenta
+          </button>
+        )}
+        {account && onArchive && balance !== 0 && (
+          <p className="screen-sub" style={{ textAlign: 'center', margin: '2px 0' }}>
+            Para archivar, deja la cuenta en <b>0</b>.
+          </p>
+        )}
+        {account && onDelete && (
+          <button className="btn btn--ghost btn--block" onClick={onDelete}>
+            🗑️ Eliminar cuenta
           </button>
         )}
       </div>
