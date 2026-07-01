@@ -9,6 +9,9 @@ export type ID = string
 export type ThemePref = 'light' | 'dark' | 'system'
 export type CatPresence = 'full' | 'medium' | 'low'
 
+/** Moneda de una cuenta. Si falta = pesos colombianos (cuentas viejas). */
+export type Currency = 'COP' | 'USD'
+
 export interface Profile {
   userName: string          // "Dahia"
   catName: string           // se elige en el onboarding
@@ -24,9 +27,15 @@ export interface Account {
   name: string
   emoji: string             // emoji libre del teclado
   color: string             // hex de la paleta ('' = color por defecto)
+  currency?: Currency       // moneda de la cuenta (falta = 'COP')
   archived: boolean
   order: number
   createdAt: number
+}
+
+/** Moneda efectiva de una cuenta (las viejas, sin campo, son COP). */
+export function accountCurrency(a: Account): Currency {
+  return a.currency ?? 'COP'
 }
 
 /** Categoría = bolsa COMPARTIDA (no atada a ingreso/gasto). */
@@ -43,9 +52,15 @@ export type MovementType = 'income' | 'expense' | 'transfer' | 'adjust'
 export interface Movement {
   id: ID
   type: MovementType
-  amount: number            // centavos, SIEMPRE positivo
+  amount: number            // centavos, SIEMPRE positivo (en la moneda de accountId)
   accountId: ID             // cuenta origen (en transfer = "desde")
   toAccountId?: ID          // transfer: cuenta destino
+  /** transfer entre monedas distintas: cuánto LLEGA a la cuenta destino
+   *  (centavos, en la moneda de toAccountId). Si falta = mismo monto que amount. */
+  amountTo?: number
+  /** transfer pendiente: ya salió del origen pero aún no llega al destino.
+   *  Mientras esté pendiente, el destino NO se acredita. */
+  pending?: boolean
   categoryId?: ID           // income / expense (no aplica a transfer)
   note?: string
   /** dirección sólo para 'adjust': suma o resta del saldo (neutral en stats) */
@@ -86,9 +101,15 @@ export function accountDelta(m: Movement, accountId: ID): number {
       return m.direction === 'out' ? -m.amount : m.amount
     case 'transfer':
       if (m.accountId === accountId) return -m.amount
-      if (m.toAccountId === accountId) return m.amount
+      // el destino solo recibe si NO está pendiente; y recibe amountTo (moneda destino)
+      if (m.toAccountId === accountId) return m.pending ? 0 : m.amountTo ?? m.amount
       return 0
   }
+}
+
+/** Cuánto ENTRA a la cuenta destino de una transferencia (moneda destino). */
+export function transferInAmount(m: Movement): number {
+  return m.amountTo ?? m.amount
 }
 
 /** ¿Este movimiento cuenta en las estadísticas de ingreso/gasto? */

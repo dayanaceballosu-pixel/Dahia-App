@@ -13,6 +13,7 @@ import { LocalProvider } from '../data/localProvider'
 import type {
   Account,
   Category,
+  Currency,
   DataSnapshot,
   Gamification,
   ID,
@@ -30,6 +31,8 @@ export interface NewMovementInput {
   amount: number
   accountId: ID
   toAccountId?: ID
+  amountTo?: number
+  pending?: boolean
   categoryId?: ID
   note?: string
   direction?: 'in' | 'out'
@@ -54,7 +57,7 @@ interface AppContextValue {
   updateProfile: (patch: Partial<Profile>) => void
 
   // cuentas
-  addAccount: (data: { name: string; emoji: string; color: string }) => Account
+  addAccount: (data: { name: string; emoji: string; color: string; currency?: Currency }) => Account
   updateAccount: (account: Account) => void
   archiveAccount: (id: ID, archived: boolean) => void
   deleteAccount: (id: ID) => void
@@ -122,12 +125,13 @@ export function AppProvider({
 
   /* -------- cuentas -------- */
   const addAccount = useCallback(
-    (data: { name: string; emoji: string; color: string }) => {
+    (data: { name: string; emoji: string; color: string; currency?: Currency }) => {
       const account: Account = {
         id: uid('acc'),
         name: data.name.trim(),
         emoji: data.emoji || '💼',
         color: data.color || '',
+        currency: data.currency ?? 'COP',
         archived: false,
         order: Date.now(),
         createdAt: Date.now(),
@@ -229,6 +233,8 @@ export function AppProvider({
         amount: Math.abs(Math.round(input.amount)),
         accountId: input.accountId,
         toAccountId: input.toAccountId,
+        amountTo: input.amountTo !== undefined ? Math.abs(Math.round(input.amountTo)) : undefined,
+        pending: input.pending || undefined,
         categoryId: input.categoryId,
         note: input.note?.trim() || undefined,
         direction: input.direction,

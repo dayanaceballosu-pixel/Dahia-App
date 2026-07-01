@@ -6,7 +6,7 @@ import { allBalances } from '../data/selectors'
 import { PALETTE } from '../data/seed'
 import { lastEmoji } from '../lib/emoji'
 import { parseAmountToCents } from '../lib/money'
-import type { Account } from '../data/types'
+import { accountCurrency, type Account, type Currency } from '../data/types'
 import './Accounts.css'
 
 const EMOJI_SUGGEST = ['💵', '🏦', '🐷', '💳', '📱', '💖', '✨', '🪙', '👛', '🎀']
@@ -58,11 +58,14 @@ export default function Accounts() {
                   {a.emoji}
                 </span>
                 <span className="row__main">
-                  <span className="row__title">{a.name}</span>
+                  <span className="row__title">
+                    {a.name}
+                    {accountCurrency(a) === 'USD' && <span className="curtag">USD 🇺🇸</span>}
+                  </span>
                   <span className="row__sub">Toca para editar</span>
                 </span>
                 <span className="row__right" style={{ color: bal < 0 ? 'var(--expense)' : undefined }}>
-                  <Money value={bal} />
+                  <Money value={bal} currency={accountCurrency(a)} />
                 </span>
               </button>
             )
@@ -94,7 +97,7 @@ export default function Accounts() {
         open={creating}
         onClose={() => setCreating(false)}
         onSave={(data) => {
-          const acc = addAccount({ name: data.name, emoji: data.emoji, color: data.color })
+          const acc = addAccount({ name: data.name, emoji: data.emoji, color: data.color, currency: data.currency })
           if (data.initialCents !== 0) {
             addMovement({
               type: 'adjust',
@@ -115,7 +118,13 @@ export default function Accounts() {
         onClose={() => setEditing(null)}
         onSave={(data) => {
           if (editing)
-            updateAccount({ ...editing, name: data.name, emoji: data.emoji, color: data.color })
+            updateAccount({
+              ...editing,
+              name: data.name,
+              emoji: data.emoji,
+              color: data.color,
+              currency: editing.currency ?? 'COP',
+            })
           setEditing(null)
         }}
         onArchive={
@@ -150,12 +159,13 @@ function AccountEditor({
   account?: Account
   hasMovements?: boolean
   onClose: () => void
-  onSave: (data: { name: string; emoji: string; color: string; initialCents: number }) => void
+  onSave: (data: { name: string; emoji: string; color: string; currency: Currency; initialCents: number }) => void
   onArchive?: () => void
 }) {
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState('💵')
   const [color, setColor] = useState('')
+  const [currency, setCurrency] = useState<Currency>('COP')
   const [balRaw, setBalRaw] = useState('')
 
   useEffect(() => {
@@ -164,6 +174,7 @@ function AccountEditor({
       setEmoji(account?.emoji ?? EMOJI_SUGGEST[Math.floor(Math.random() * EMOJI_SUGGEST.length)])
       // sugerir un color si no tiene
       setColor(account?.color ?? PALETTE[Math.floor(Math.random() * PALETTE.length)])
+      setCurrency(account ? accountCurrency(account) : 'COP')
       setBalRaw('')
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -230,6 +241,40 @@ function AccountEditor({
           </div>
         </div>
 
+        {!account ? (
+          <div className="field">
+            <label>Moneda</label>
+            <div className="rowflex" style={{ gap: 8 }}>
+              <button
+                type="button"
+                className={`chip ${currency === 'COP' ? 'chip--active' : ''}`}
+                onClick={() => setCurrency('COP')}
+              >
+                🇨🇴 Pesos (COP)
+              </button>
+              <button
+                type="button"
+                className={`chip ${currency === 'USD' ? 'chip--active' : ''}`}
+                onClick={() => setCurrency('USD')}
+              >
+                🇺🇸 Dólares (USD)
+              </button>
+            </div>
+            <p className="screen-sub" style={{ paddingLeft: 2 }}>
+              Esta cuenta manejará solo <b>{currency === 'USD' ? 'dólares' : 'pesos'}</b>. No se puede
+              cambiar después.
+            </p>
+          </div>
+        ) : (
+          <div className="field">
+            <label>Moneda</label>
+            <p className="screen-sub" style={{ paddingLeft: 2 }}>
+              {accountCurrency(account) === 'USD' ? '🇺🇸 Dólares (USD)' : '🇨🇴 Pesos (COP)'} — no se
+              puede cambiar.
+            </p>
+          </div>
+        )}
+
         {!account && (
           <div className="field">
             <label>Saldo inicial</label>
@@ -244,7 +289,7 @@ function AccountEditor({
               ¿Cuánto hay en esta cuenta ahora? Si está vacía, escribe <b>0</b>.{' '}
               {initialCents !== 0 && (
                 <>
-                  Empezará con <Money value={initialCents} />.
+                  Empezará con <Money value={initialCents} currency={currency} />.
                 </>
               )}
               <br />
@@ -256,7 +301,7 @@ function AccountEditor({
         <button
           className="btn btn--primary btn--block"
           disabled={!name.trim() || missingBalance}
-          onClick={() => onSave({ name, emoji, color, initialCents })}
+          onClick={() => onSave({ name, emoji, color, currency, initialCents })}
         >
           {account ? 'Guardar cambios' : 'Crear cuenta'}
         </button>

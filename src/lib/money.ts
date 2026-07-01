@@ -4,6 +4,13 @@
    Los decimales se muestran más pequeños en la UI (clase .dec).
    =========================================================== */
 
+export type CurrencyCode = 'COP' | 'USD'
+
+/** Símbolo que se muestra antes del número según la moneda. */
+export function currencySymbol(currency: CurrencyCode = 'COP'): string {
+  return currency === 'USD' ? 'US$' : '$'
+}
+
 export function toCents(value: number): number {
   return Math.round(value * 100)
 }

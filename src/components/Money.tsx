@@ -1,8 +1,10 @@
-import { splitMoney } from '../lib/money'
+import { splitMoney, currencySymbol, type CurrencyCode } from '../lib/money'
 
 interface MoneyProps {
   /** valor en centavos */
   value: number
+  /** moneda (para el símbolo). Por defecto pesos. */
+  currency?: CurrencyCode
   /** mostrar el signo + en positivos */
   showPlus?: boolean
   /** pintar según signo (verde/rojo) */
@@ -15,16 +17,18 @@ interface MoneyProps {
 
 export default function Money({
   value,
+  currency = 'COP',
   showPlus = false,
   colored = false,
   hidden = false,
   className = '',
   style,
 }: MoneyProps) {
+  const sym = currencySymbol(currency)
   if (hidden) {
     return (
       <span className={`money ${className}`} style={style}>
-        $ ••••••
+        {sym} ••••••
       </span>
     )
   }
@@ -41,7 +45,7 @@ export default function Money({
 
   return (
     <span className={`money ${className}`} style={{ color, ...style }}>
-      {sign}${intStr}
+      {sign}{sym}{intStr}
       <span className="dec">,{decStr}</span>
     </span>
   )

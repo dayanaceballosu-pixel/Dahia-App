@@ -87,7 +87,7 @@ export class FirebaseProvider implements DataProvider {
   }
 
   async upsertAccount(account: Account): Promise<void> {
-    await setDoc(this.itemRef('accounts', account.id), account)
+    await setDoc(this.itemRef('accounts', account.id), sanitize(account))
   }
   async removeAccount(id: ID): Promise<void> {
     await deleteDoc(this.itemRef('accounts', id))

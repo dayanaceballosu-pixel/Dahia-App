@@ -1,3 +1,18 @@
+/* Caja de transferencia pendiente (confirmar llegada) */
+.pending-box {
+  background: linear-gradient(100deg, #fff3c9, #ffe8b0);
+  border: 1px solid #f2c94c;
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  margin-top: 4px;
+}
+.pending-box__title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #7a4a00;
+  margin: 0 0 4px;
+}
+
 /* Selector de tipo */
 .typegrid { display: flex; flex-direction: column; gap: 12px; padding-bottom: 6px; }
 .typebtn {

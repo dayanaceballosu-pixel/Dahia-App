@@ -59,7 +59,41 @@
 }
 .eyebtn { font-size: 15px; opacity: 0.8; }
 .balancecard__amount { font-size: 40px; font-weight: 800; letter-spacing: -1px; margin-top: 2px; }
+.balancecard__amount2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #1f7a4d;
+  margin-top: 2px;
+}
 .balancecard__sub { font-size: 12.5px; color: var(--text-faint); margin-top: 4px; }
+
+/* Aviso de transferencias en camino (pendientes) */
+.pendingcard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: linear-gradient(100deg, #fff3c9, #ffe8b0);
+  border: 1px solid #f2c94c;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s ease;
+}
+.pendingcard:active { transform: scale(0.98); }
+.pendingcard__ic { font-size: 24px; }
+.pendingcard b { font-size: 15px; display: block; color: #7a4a00; }
+.pendingcard__cta {
+  font-weight: 800;
+  font-size: 14px;
+  color: #7a4a00;
+  padding: 9px 15px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: var(--shadow-sm);
+}
 
 /* Racha */
 .dailycard {

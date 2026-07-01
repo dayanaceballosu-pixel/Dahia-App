@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import Sheet from './ui/Sheet'
 import Cat from './Cat/Cat'
 import { useApp } from '../store/store'
-import { parseAmountToCents } from '../lib/money'
+import { parseAmountToCents, currencySymbol } from '../lib/money'
 import { PALETTE } from '../data/seed'
-import type { Category, Movement, MovementType } from '../data/types'
+import { accountCurrency, type Category, type Movement, type MovementType } from '../data/types'
+import Money from './Money'
 import './AddSheet.css'
 
 interface AddSheetProps {
@@ -35,6 +36,7 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
   const [step, setStep] = useState<Step>('type')
   const [type, setType] = useState<MovementType>('expense')
   const [amountRaw, setAmountRaw] = useState('')
+  const [amountToRaw, setAmountToRaw] = useState('')
   const [accountId, setAccountId] = useState('')
   const [toAccountId, setToAccountId] = useState('')
   const [categoryId, setCategoryId] = useState('')
@@ -47,6 +49,7 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
       setStep('form')
       setType(edit.type)
       setAmountRaw(String(edit.amount / 100))
+      setAmountToRaw(edit.amountTo !== undefined ? String(edit.amountTo / 100) : '')
       setCategoryId(edit.categoryId ?? '')
       setNote(edit.note ?? '')
       setDirection(edit.direction ?? 'in')
@@ -55,6 +58,7 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
     } else {
       setStep('type')
       setAmountRaw('')
+      setAmountToRaw('')
       setCategoryId('')
       setNote('')
       setDirection('in')
@@ -64,14 +68,23 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const cents = parseAmountToCents(amountRaw)
+  const centsTo = parseAmountToCents(amountToRaw)
   const meta = TYPE_META[type]
   const needsCategory = type === 'income' || type === 'expense'
+
+  const srcAcc = active.find((a) => a.id === accountId)
+  const dstAcc = active.find((a) => a.id === toAccountId)
+  const srcCur = srcAcc ? accountCurrency(srcAcc) : 'COP'
+  const dstCur = dstAcc ? accountCurrency(dstAcc) : 'COP'
+  // transferencia entre monedas distintas → pide "cuánto llega" y queda pendiente
+  const isCross = type === 'transfer' && !!dstAcc && srcCur !== dstCur
 
   const canSave =
     cents > 0 &&
     !!accountId &&
     (!needsCategory || !!categoryId) &&
-    (type !== 'transfer' || (!!toAccountId && toAccountId !== accountId))
+    (type !== 'transfer' || (!!toAccountId && toAccountId !== accountId)) &&
+    (!isCross || centsTo > 0)
 
   function pickType(t: MovementType) {
     setType(t)
@@ -87,6 +100,10 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
         amount: cents,
         accountId,
         toAccountId: type === 'transfer' ? toAccountId : undefined,
+        amountTo: isCross ? centsTo : undefined,
+        // al editar se conserva EXACTO el estado pendiente (no re-pendiente lo ya confirmado);
+        // para marcar la llegada está el botón "Confirmar" aparte.
+        pending: isCross ? edit.pending : undefined,
         categoryId: type === 'income' || type === 'expense' ? categoryId || undefined : undefined,
         direction: type === 'adjust' ? direction : undefined,
         note: note.trim() || undefined,
@@ -99,6 +116,8 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
       amount: cents,
       accountId,
       toAccountId: type === 'transfer' ? toAccountId : undefined,
+      amountTo: isCross ? centsTo : undefined,
+      pending: isCross ? true : undefined,
       categoryId: type === 'income' || type === 'expense' ? categoryId || undefined : undefined,
       direction: type === 'adjust' ? direction : undefined,
       note,
@@ -107,6 +126,13 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
     window.setTimeout(() => {
       onClose()
     }, 1300)
+  }
+
+  // Confirmar que una transferencia pendiente YA llegó (acredita el destino).
+  function confirmArrival() {
+    if (!edit || centsTo <= 0) return
+    updateMovement({ ...edit, amountTo: centsTo, pending: undefined })
+    onClose()
   }
 
   function remove() {
@@ -166,9 +192,9 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
             </div>
           ) : (
             <>
-              {/* Monto — un solo número grande */}
+              {/* Monto — un solo número grande (en la moneda de la cuenta) */}
               <div className={`amount amount--${meta.cls}`}>
-                <span className="amount__cur">$</span>
+                <span className="amount__cur">{currencySymbol(srcCur)}</span>
                 <input
                   className="amount__big"
                   inputMode="decimal"
@@ -178,6 +204,15 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
                   autoFocus
                 />
               </div>
+              {type === 'transfer' && (
+                <p className="addform__hint" style={{ marginTop: -4 }}>
+                  {isCross ? (
+                    <>Sale de tu cuenta en {srcCur === 'USD' ? 'dólares' : 'pesos'} 💸</>
+                  ) : (
+                    <>Se mueve entre tus cuentas 🔁</>
+                  )}
+                </p>
+              )}
 
               {/* Cuenta */}
               <div className="field">
@@ -198,6 +233,31 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
                     value={toAccountId}
                     onChange={setToAccountId}
                   />
+                </div>
+              )}
+
+              {/* Cross-currency: cuánto LLEGA a la cuenta destino */}
+              {isCross && (
+                <div className="field">
+                  <label>¿Cuánto llegará en {dstCur === 'USD' ? 'dólares' : 'pesos'}? *</label>
+                  <div className="rowflex" style={{ alignItems: 'center', gap: 8 }}>
+                    <span className="amount__cur" style={{ fontSize: 20 }}>
+                      {currencySymbol(dstCur)}
+                    </span>
+                    <input
+                      className="input"
+                      inputMode="decimal"
+                      placeholder="0"
+                      value={amountToRaw}
+                      onChange={(e) => setAmountToRaw(e.target.value)}
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                  <p className="addform__hint">
+                    💱 Pon lo que te dicen que vas a recibir (ej: lo que PayPal muestra al retirar).
+                    Como el valor puede cambiar y demorar, queda <b>pendiente</b> hasta que confirmes
+                    que llegó — así no te muestra plata de más.
+                  </p>
                 </div>
               )}
 
@@ -253,6 +313,26 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
                   onChange={(e) => setNote(e.target.value)}
                 />
               </div>
+
+              {/* Confirmar llegada de una transferencia pendiente */}
+              {isEdit && edit?.type === 'transfer' && edit?.pending && (
+                <div className="pending-box">
+                  <p className="pending-box__title">⏳ En camino</p>
+                  <p className="addform__hint" style={{ marginTop: 0 }}>
+                    Salió <Money value={edit.amount} currency={srcCur} /> de {srcAcc?.name ?? 'origen'}.
+                    Cuando el dinero llegue a {dstAcc?.name ?? 'destino'}, ajusta arriba cuánto llegó
+                    de verdad y confirma.
+                  </p>
+                  <button
+                    className="btn btn--income btn--block"
+                    disabled={centsTo <= 0}
+                    onClick={confirmArrival}
+                  >
+                    ✅ Confirmar que ya llegó ({currencySymbol(dstCur)}
+                    {amountToRaw || '0'})
+                  </button>
+                </div>
+              )}
 
               <button
                 className={`btn btn--${meta.cls} btn--block`}

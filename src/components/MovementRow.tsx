@@ -1,7 +1,7 @@
 import { useApp } from '../store/store'
 import Money from './Money'
 import { relativeDay, formatTime } from '../lib/date'
-import type { Movement } from '../data/types'
+import { accountCurrency, transferInAmount, type Movement } from '../data/types'
 
 interface Props {
   movement: Movement
@@ -24,6 +24,10 @@ export default function MovementRow({ movement: m, onClick }: Props) {
     title = 'Ajuste de saldo'
   }
 
+  const srcCur = account ? accountCurrency(account) : 'COP'
+  const dstCur = toAccount ? accountCurrency(toAccount) : 'COP'
+  const isCross = m.type === 'transfer' && !!toAccount && srcCur !== dstCur
+
   let sub = account?.name ?? '—'
   if (m.type === 'transfer' && toAccount) sub = `${account?.name ?? '—'} → ${toAccount.name}`
   if (m.note) sub = m.note
@@ -45,7 +49,10 @@ export default function MovementRow({ movement: m, onClick }: Props) {
         {emoji}
       </span>
       <span className="row__main">
-        <span className="row__title">{title}</span>
+        <span className="row__title">
+          {title}
+          {m.pending && <span className="pending-pill">⏳ pendiente</span>}
+        </span>
         <span className="row__sub">
           {relativeDay(m.date)} · {formatTime(m.date)}
           {sub ? ` · ${sub}` : ''}
@@ -54,10 +61,16 @@ export default function MovementRow({ movement: m, onClick }: Props) {
       <span className="row__right">
         {m.type === 'transfer' ? (
           <span style={{ color: 'var(--transfer)' }}>
-            <Money value={m.amount} />
+            <Money value={m.amount} currency={srcCur} />
+            {isCross && (
+              <>
+                {' → '}
+                <Money value={transferInAmount(m)} currency={dstCur} />
+              </>
+            )}
           </span>
         ) : (
-          <Money value={signed} colored showPlus={m.type === 'income'} />
+          <Money value={signed} currency={srcCur} colored showPlus={m.type === 'income'} />
         )}
       </span>
     </button>

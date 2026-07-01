@@ -1,5 +1,5 @@
-import { accountDelta, countsInStats } from './types'
-import type { Account, ID, Movement } from './types'
+import { accountDelta, accountCurrency, countsInStats, transferInAmount } from './types'
+import type { Account, Currency, ID, Movement } from './types'
 
 /** Movimientos ordenados cronológicamente (viejo → nuevo). */
 export function sortedAsc(movements: Movement[]): Movement[] {
@@ -26,10 +26,30 @@ export function allBalances(movements: Movement[]): Map<ID, number> {
       map.set(m.accountId, (map.get(m.accountId) ?? 0) + accountDelta(m, m.accountId))
     } else if (m.type === 'transfer') {
       map.set(m.accountId, (map.get(m.accountId) ?? 0) - m.amount)
-      if (m.toAccountId) map.set(m.toAccountId, (map.get(m.toAccountId) ?? 0) + m.amount)
+      // pendiente: el destino aún no recibe
+      if (m.toAccountId && !m.pending)
+        map.set(m.toAccountId, (map.get(m.toAccountId) ?? 0) + transferInAmount(m))
     }
   }
   return map
+}
+
+/** Totales del patrimonio separados por moneda (nunca se mezclan). */
+export type CurrencyTotals = Record<Currency, number>
+
+export function totalsByCurrency(accounts: Account[], movements: Movement[]): CurrencyTotals {
+  const balances = allBalances(movements)
+  const totals: CurrencyTotals = { COP: 0, USD: 0 }
+  for (const a of accounts) {
+    if (a.archived) continue
+    totals[accountCurrency(a)] += balances.get(a.id) ?? 0
+  }
+  return totals
+}
+
+/** Transferencias pendientes (dinero que salió pero aún no ha llegado). */
+export function pendingTransfers(movements: Movement[]): Movement[] {
+  return movements.filter((m) => m.type === 'transfer' && m.pending)
 }
 
 /** Saldo total (sólo cuentas no archivadas). */
@@ -57,8 +77,9 @@ export function balancesAfter(movements: Movement[]): Map<ID, BalanceAfter> {
       running.set(m.accountId, (running.get(m.accountId) ?? 0) - m.amount)
       const after: BalanceAfter = { account: running.get(m.accountId)! }
       if (m.toAccountId) {
-        running.set(m.toAccountId, (running.get(m.toAccountId) ?? 0) + m.amount)
-        after.toAccount = running.get(m.toAccountId)!
+        if (!m.pending)
+          running.set(m.toAccountId, (running.get(m.toAccountId) ?? 0) + transferInAmount(m))
+        after.toAccount = running.get(m.toAccountId) ?? 0
       }
       result.set(m.id, after)
     } else {

@@ -34,6 +34,21 @@
 .shopitem--on { outline: 2.5px solid var(--income); box-shadow: 0 8px 20px -10px rgba(52, 192, 138, 0.5); }
 .shopitem--locked { opacity: 0.75; }
 
+.mundial-banner {
+  text-align: center;
+  font-size: 12.5px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #7a4a00;
+  background: linear-gradient(100deg, #fff3c9, #ffe08a);
+  border: 1px solid #f2c94c;
+  border-radius: var(--r-md);
+  padding: 9px 12px;
+  margin: 2px 0 -2px;
+  box-shadow: var(--shadow-sm);
+}
+.mundial-banner b { font-weight: 800; }
+
 .shop-foot {
   text-align: center;
   font-size: 12px;

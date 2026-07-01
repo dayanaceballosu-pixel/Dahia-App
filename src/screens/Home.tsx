@@ -9,7 +9,8 @@ import Money from '../components/Money'
 import MovementRow from '../components/MovementRow'
 import { useSheets } from '../components/SheetsContext'
 import { effectiveLook } from '../data/shop'
-import { totalBalance, sortedDesc } from '../data/selectors'
+import { totalsByCurrency, pendingTransfers, sortedDesc } from '../data/selectors'
+import { accountCurrency } from '../data/types'
 import { localDayKey } from '../lib/date'
 import './Home.css'
 
@@ -20,7 +21,12 @@ export default function Home() {
   const [mood, setMood] = useState<CatMood>('idle')
   const [toast, setToast] = useState<string | null>(null)
 
-  const total = useMemo(() => totalBalance(accounts, movements), [accounts, movements])
+  const totals = useMemo(() => totalsByCurrency(accounts, movements), [accounts, movements])
+  const hasUSD = useMemo(
+    () => accounts.some((a) => !a.archived && accountCurrency(a) === 'USD'),
+    [accounts],
+  )
+  const pendings = useMemo(() => pendingTransfers(movements), [movements])
   const recent = useMemo(() => sortedDesc(movements).slice(0, 4), [movements])
   const look = useMemo(() => effectiveLook(gamification, new Date().getMonth() + 1), [gamification])
   const claimedToday = gamification.lastClaimDate === localDayKey()
@@ -82,14 +88,34 @@ export default function Home() {
           </button>
         </div>
         <div className="balancecard__amount">
-          <Money value={total} hidden={profile.hideBalance} />
+          <Money value={totals.COP} currency="COP" hidden={profile.hideBalance} />
         </div>
+        {hasUSD && (
+          <div className="balancecard__amount2">
+            <Money value={totals.USD} currency="USD" hidden={profile.hideBalance} />
+          </div>
+        )}
         <p className="balancecard__sub">
           {accounts.filter((a) => !a.archived).length} cuenta
           {accounts.filter((a) => !a.archived).length === 1 ? '' : 's'} activa
           {accounts.filter((a) => !a.archived).length === 1 ? '' : 's'}
+          {hasUSD ? ' · pesos y dólares por separado' : ''}
         </p>
       </section>
+
+      {/* Transferencias en camino (pendientes de confirmar) */}
+      {pendings.length > 0 && (
+        <button className="pendingcard" onClick={() => navigate('/movimientos')}>
+          <span className="pendingcard__ic">⏳</span>
+          <span className="grow">
+            <b>
+              {pendings.length} {pendings.length === 1 ? 'transferencia en camino' : 'transferencias en camino'}
+            </b>
+            <span className="dailycard__sub">Confírmalas cuando el dinero llegue de verdad 💸</span>
+          </span>
+          <span className="pendingcard__cta">Ver</span>
+        </button>
+      )}
 
       {/* Racha diaria */}
       {!claimedToday && (

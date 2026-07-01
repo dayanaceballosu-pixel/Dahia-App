@@ -10,13 +10,18 @@ import {
   isUnlocked,
   inSeason,
   effectiveLook,
+  unlocksInDays,
+  mundialDaysLeft,
   type ItemKind,
   type ShopItem,
 } from '../data/shop'
 import './Shop.css'
 
-const TABS: { kind: ItemKind; label: string; emoji: string }[] = [
+type TabKey = ItemKind | 'mundial'
+
+const TABS: { kind: TabKey; label: string; emoji: string }[] = [
   { kind: 'accessory', label: 'Accesorios', emoji: '🎀' },
+  { kind: 'mundial', label: 'Mundial', emoji: '⚽' },
   { kind: 'skin', label: 'Skins', emoji: '🐱' },
   { kind: 'background', label: 'Fondos', emoji: '🖼️' },
 ]
@@ -26,13 +31,20 @@ const MES = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
 export default function Shop() {
   const { gamification, toggleEquip, selectSkin, selectBackground } = useApp()
   const navigate = useNavigate()
-  const [tab, setTab] = useState<ItemKind>('accessory')
+  const [tab, setTab] = useState<TabKey>('accessory')
   const [preview, setPreview] = useState<ShopItem | null>(null)
   const month = new Date().getMonth() + 1
   const best = gamification.bestStreak ?? 0
   const look = effectiveLook(gamification, month)
+  const daysLeft = mundialDaysLeft()
 
-  const items = useMemo(() => SHOP_ITEMS.filter((i) => i.kind === tab), [tab])
+  const items = useMemo(
+    () =>
+      SHOP_ITEMS.filter((i) =>
+        tab === 'mundial' ? i.event === 'mundial' : i.kind === tab && !i.event,
+      ),
+    [tab],
+  )
 
   function unlocked(item: ShopItem) {
     return isUnlocked(item, gamification, month)
@@ -44,6 +56,10 @@ export default function Shop() {
   }
 
   function statusLabel(item: ShopItem): { text: string; cls: string } {
+    if (item.event === 'mundial' && !unlocked(item)) {
+      const d = unlocksInDays(item)
+      return { text: d <= 1 ? '🔒 mañana' : `🔒 en ${d} días`, cls: 'locked' }
+    }
     if (!inSeason(item, month)) return { text: `🎄 ${MES[item.seasonal![0]]}`, cls: 'locked' }
     if (!unlocked(item)) return { text: `🔒 ${item.unlockStreak} días`, cls: 'locked' }
     if (active(item)) return { text: '✓ puesto', cls: 'on' }
@@ -73,7 +89,7 @@ export default function Shop() {
       </div>
 
       {/* Pestañas */}
-      <div className="rowflex" style={{ gap: 8, justifyContent: 'center' }}>
+      <div className="rowflex" style={{ gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
         {TABS.map((t) => (
           <button
             key={t.kind}
@@ -84,6 +100,17 @@ export default function Shop() {
           </button>
         ))}
       </div>
+
+      {/* Aviso del Mundial (tiempo limitado) */}
+      {tab === 'mundial' && (
+        <div className="mundial-banner">
+          {daysLeft > 0 ? (
+            <>⚽ ¡Se desbloquea uno por día! El Mundial acaba en <b>{daysLeft}</b> {daysLeft === 1 ? 'día' : 'días'} ⏳</>
+          ) : (
+            <>⚽ ¡Colección del Mundial completa! Es tuya para siempre 🏆</>
+          )}
+        </div>
+      )}
 
       {/* Grid de ítems */}
       <div className="shopgrid">
@@ -100,8 +127,9 @@ export default function Shop() {
       </div>
 
       <p className="shop-foot">
-        Cada día que entras sube tu racha 🔥 y desbloqueas cosas nuevas para tu michi.
-        ¡Y quedan tuyas para siempre!
+        {tab === 'mundial'
+          ? 'Entra cada día del Mundial y ve completando la colección. ¡Lo que desbloqueas queda tuyo para siempre! ⚽'
+          : 'Cada día que entras sube tu racha 🔥 y desbloqueas cosas nuevas para tu michi. ¡Y quedan tuyas para siempre!'}
       </p>
 
       <PreviewSheet
@@ -194,6 +222,18 @@ function PreviewSheet({
                     : 'Usar este'}
               </button>
             </>
+          ) : item.event === 'mundial' ? (
+            <div className="preview-locked">
+              <p className="screen-sub">👀 Así se le vería… ¡ya casi!</p>
+              <div className="preview-locked__big">⚽</div>
+              <p>
+                Se desbloquea{' '}
+                {unlocksInDays(item) <= 1 ? <b>mañana</b> : <>en <b>{unlocksInDays(item)} días</b></>} 🔥
+              </p>
+              <p className="screen-sub">
+                Entra cada día del Mundial y ve completando la colección. ¡Corre, que el Mundial se acaba! ⏳
+              </p>
+            </div>
           ) : (
             <div className="preview-locked">
               <p className="screen-sub">👀 Así se le vería… ¡desbloquéalo!</p>
