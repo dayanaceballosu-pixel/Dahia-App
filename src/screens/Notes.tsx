@@ -5,7 +5,6 @@ import Cat from '../components/Cat/Cat'
 import CatStage from '../components/Cat/CatStage'
 import Sheet from '../components/ui/Sheet'
 import { effectiveLook } from '../data/shop'
-import { lastEmoji } from '../lib/emoji'
 import { uid } from '../lib/id'
 import type { Note, NoteColor, NoteItem } from '../data/types'
 import './Notes.css'
@@ -17,7 +16,6 @@ const COLORS: { key: NoteColor; label: string }[] = [
   { key: 'peach', label: 'Durazno' },
   { key: 'yellow', label: 'Amarillo' },
 ]
-const NOTE_EMOJIS = ['📝', '💡', '🎥', '🖋️', '🛒', '💭', '💖', '⭐', '📌', '🎀']
 
 /** Inclinación estable por nota (entre -2.5° y 2.5°). */
 function tilt(id: string): number {
@@ -90,11 +88,7 @@ export default function Notes() {
                 {n.pinned ? '💖' : '🤍'}
               </button>
               <div className="note__content" onClick={() => setEditing(n)} role="button" tabIndex={0}>
-                {(n.emoji || n.title) && (
-                  <div className="note__title">
-                    {n.emoji ? <span>{n.emoji}</span> : null} {n.title}
-                  </div>
-                )}
+                {n.title && <div className="note__title">{n.title}</div>}
                 {n.isChecklist ? (
                   <ul className="note__list">
                     {(n.items ?? []).map((it) => (
@@ -168,7 +162,6 @@ function NoteEditor({
   onSave: (data: NoteData) => void
   onDelete?: () => void
 }) {
-  const [emoji, setEmoji] = useState('📝')
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [isChecklist, setIsChecklist] = useState(false)
@@ -178,7 +171,6 @@ function NoteEditor({
 
   useEffect(() => {
     if (!open) return
-    setEmoji(note?.emoji ?? '📝')
     setTitle(note?.title ?? '')
     setBody(note?.body ?? '')
     setIsChecklist(note?.isChecklist ?? false)
@@ -197,7 +189,7 @@ function NoteEditor({
   function save() {
     if (!canSave) return
     onSave({
-      emoji: emoji || undefined,
+      emoji: undefined,
       title: title.trim() || undefined,
       body: isChecklist ? undefined : body.trim() || undefined,
       items: isChecklist ? cleanItems.map((i) => ({ ...i, text: i.text.trim() })) : undefined,
@@ -212,29 +204,13 @@ function NoteEditor({
       <div className="stack">
         <div className="field">
           <label>Título</label>
-          <div className="rowflex">
-            <input
-              className="input emoji-input"
-              value={emoji}
-              onChange={(e) => setEmoji(lastEmoji(e.target.value))}
-              aria-label="Emoji"
-            />
-            <input
-              className="input"
-              placeholder="Ej: Ideas, Mercado, Pendientes…"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              style={{ flex: 1, minWidth: 0 }}
-              autoFocus
-            />
-          </div>
-          <div className="chips-scroll no-scrollbar" style={{ marginTop: 2 }}>
-            {NOTE_EMOJIS.map((e) => (
-              <button key={e} className={`emoji-chip ${emoji === e ? 'emoji-chip--on' : ''}`} onClick={() => setEmoji(e)}>
-                {e}
-              </button>
-            ))}
-          </div>
+          <input
+            className="input"
+            placeholder="Ej: Ideas, Mercado, Pendientes…"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            autoFocus
+          />
         </div>
 
         <div className="field">
