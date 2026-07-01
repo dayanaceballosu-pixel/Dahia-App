@@ -5,6 +5,7 @@ import type {
   Gamification,
   ID,
   Movement,
+  PaymentReminder,
   Profile,
   TokenEntry,
   WorkStats,
@@ -38,6 +39,9 @@ export interface DataProvider {
   upsertTokenEntry(entry: TokenEntry): Promise<void>
   removeTokenEntry(id: ID): Promise<void>
   saveWorkStats(workStats: WorkStats): Promise<void>
+
+  upsertReminder(reminder: PaymentReminder): Promise<void>
+  removeReminder(id: ID): Promise<void>
 
   /** Borra todo (útil para "empezar de cero" o pruebas). */
   reset(): Promise<void>

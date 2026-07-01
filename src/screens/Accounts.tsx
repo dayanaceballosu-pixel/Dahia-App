@@ -6,14 +6,46 @@ import { allBalances } from '../data/selectors'
 import { PALETTE } from '../data/seed'
 import { lastEmoji } from '../lib/emoji'
 import { parseAmountToCents } from '../lib/money'
-import { accountCurrency, type Account, type Currency } from '../data/types'
+import {
+  accountCurrency,
+  type Account,
+  type Currency,
+  type PaymentReminder,
+  type ReminderFreq,
+} from '../data/types'
+import { reminderStatus, sortedReminders, FREQ_LABEL } from '../data/reminders'
+import { localDayKey } from '../lib/date'
 import './Accounts.css'
 
 const EMOJI_SUGGEST = ['💵', '🏦', '🐷', '💳', '📱', '💖', '✨', '🪙', '👛', '🎀']
+const REM_EMOJIS = ['🏠', '💡', '📺', '📱', '💳', '🚗', '💊', '🎓', '🛒', '💖']
+const FREQS: { key: ReminderFreq; label: string }[] = [
+  { key: 'weekly', label: 'Semanal' },
+  { key: 'biweekly', label: 'Quincenal' },
+  { key: 'monthly', label: 'Mensual' },
+  { key: 'bimonthly', label: 'Cada 2 meses' },
+]
+
+function dayKeyToTs(key: string): number {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(y, m - 1, d, 12, 0, 0).getTime()
+}
 
 export default function Accounts() {
-  const { accounts, movements, addAccount, updateAccount, archiveAccount, deleteAccount, addMovement } =
-    useApp()
+  const {
+    accounts,
+    movements,
+    reminders,
+    addAccount,
+    updateAccount,
+    archiveAccount,
+    deleteAccount,
+    addMovement,
+    addReminder,
+    updateReminder,
+    deleteReminder,
+    markReminderPaid,
+  } = useApp()
 
   const accountHasMovements = (id: string) =>
     movements.some((m) => m.accountId === id || m.toAccountId === id)
@@ -24,6 +56,11 @@ export default function Accounts() {
 
   const [editing, setEditing] = useState<Account | null>(null)
   const [creating, setCreating] = useState(false)
+  const [editRem, setEditRem] = useState<PaymentReminder | null>(null)
+  const [creatingRem, setCreatingRem] = useState(false)
+
+  const remList = useMemo(() => sortedReminders(reminders), [reminders])
+  const accName = (id?: string) => accounts.find((a) => a.id === id)?.name
 
   return (
     <main className="screen">
@@ -93,6 +130,63 @@ export default function Accounts() {
         </details>
       )}
 
+      {/* Recordatorios de pago */}
+      <section className="stack" style={{ gap: 10, marginTop: 8 }}>
+        <div className="spread">
+          <span className="t-title">🔔 Recordatorios de pago</span>
+          <button className="chip" onClick={() => setCreatingRem(true)}>＋ Nuevo</button>
+        </div>
+
+        {remList.length === 0 ? (
+          <div className="card empty" style={{ padding: '18px 16px' }}>
+            <p style={{ margin: 0 }}>
+              Anota lo que debes pagar (arriendo, servicios, subs…) y te recuerda cuándo. 🗓️
+            </p>
+            <button className="btn btn--primary btn--block" style={{ marginTop: 12 }} onClick={() => setCreatingRem(true)}>
+              Crear recordatorio
+            </button>
+          </div>
+        ) : (
+          <div className="list">
+            {remList.map((r) => {
+              const st = reminderStatus(r)
+              const dim = !r.active || r.done
+              return (
+                <div key={r.id} className={`row rem ${dim ? 'rem--dim' : ''}`}>
+                  <button className="rem__main" onClick={() => setEditRem(r)}>
+                    <span className="row__icon">{r.emoji || '🔔'}</span>
+                    <span className="row__main">
+                      <span className="row__title">{r.name}</span>
+                      <span className="row__sub">
+                        {r.amount ? <><Money value={r.amount} /> · </> : ''}
+                        {r.periodic && r.freq ? FREQ_LABEL[r.freq] : 'una vez'}
+                        {accName(r.accountId) ? ` · ${accName(r.accountId)}` : ''}
+                      </span>
+                    </span>
+                  </button>
+                  {r.done ? (
+                    <span className="rem__pill rem__pill--done">✓ pagado</span>
+                  ) : !r.active ? (
+                    <span className="rem__pill rem__pill--off">pausado</span>
+                  ) : (
+                    <button
+                      className={`rem__pill rem__pill--${st.state}`}
+                      title="Marcar como pagado"
+                      onClick={() => markReminderPaid(r.id)}
+                    >
+                      {st.label}
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+            <p className="screen-sub" style={{ textAlign: 'center', marginTop: 2 }}>
+              Toca la fechita para marcar “ya lo pagué” ✅
+            </p>
+          </div>
+        )}
+      </section>
+
       <AccountEditor
         open={creating}
         onClose={() => setCreating(false)}
@@ -143,7 +237,227 @@ export default function Accounts() {
             : undefined
         }
       />
+
+      <ReminderEditor
+        open={creatingRem}
+        accounts={active}
+        onClose={() => setCreatingRem(false)}
+        onSave={(data) => {
+          addReminder(data)
+          setCreatingRem(false)
+        }}
+      />
+
+      <ReminderEditor
+        open={!!editRem}
+        reminder={editRem ?? undefined}
+        accounts={active}
+        onClose={() => setEditRem(null)}
+        onSave={(data) => {
+          if (editRem) updateReminder({ ...editRem, ...data })
+          setEditRem(null)
+        }}
+        onPaid={editRem ? () => { markReminderPaid(editRem.id); setEditRem(null) } : undefined}
+        onDelete={
+          editRem
+            ? () => {
+                if (confirm('¿Borrar este recordatorio?')) {
+                  deleteReminder(editRem.id)
+                  setEditRem(null)
+                }
+              }
+            : undefined
+        }
+      />
     </main>
+  )
+}
+
+/* ---------- Hoja: crear / editar recordatorio de pago ---------- */
+type RemData = Omit<PaymentReminder, 'id' | 'createdAt'>
+function ReminderEditor({
+  open,
+  reminder,
+  accounts,
+  onClose,
+  onSave,
+  onPaid,
+  onDelete,
+}: {
+  open: boolean
+  reminder?: PaymentReminder
+  accounts: Account[]
+  onClose: () => void
+  onSave: (data: RemData) => void
+  onPaid?: () => void
+  onDelete?: () => void
+}) {
+  const [name, setName] = useState('')
+  const [emoji, setEmoji] = useState('🔔')
+  const [amountRaw, setAmountRaw] = useState('')
+  const [accountId, setAccountId] = useState<string>('')
+  const [periodic, setPeriodic] = useState(true)
+  const [freq, setFreq] = useState<ReminderFreq>('monthly')
+  const [dayKey, setDayKey] = useState(localDayKey())
+  const [note, setNote] = useState('')
+  const [active, setActive] = useState(true)
+
+  useEffect(() => {
+    if (!open) return
+    setName(reminder?.name ?? '')
+    setEmoji(reminder?.emoji ?? '🔔')
+    setAmountRaw(reminder?.amount ? String(reminder.amount / 100) : '')
+    setAccountId(reminder?.accountId ?? '')
+    setPeriodic(reminder?.periodic ?? true)
+    setFreq(reminder?.freq ?? 'monthly')
+    setDayKey(localDayKey(reminder?.nextDate ?? Date.now()))
+    setNote(reminder?.note ?? '')
+    setActive(reminder?.active ?? true)
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const amount = parseAmountToCents(amountRaw)
+  const canSave = !!name.trim() && !!dayKey
+
+  function save() {
+    if (!canSave) return
+    onSave({
+      name: name.trim(),
+      emoji: emoji || undefined,
+      amount: amount > 0 ? amount : undefined,
+      accountId: accountId || undefined,
+      periodic,
+      freq: periodic ? freq : undefined,
+      nextDate: dayKeyToTs(dayKey),
+      note: note.trim() || undefined,
+      active,
+      done: reminder?.done && !periodic ? reminder.done : false,
+    })
+  }
+
+  return (
+    <Sheet open={open} onClose={onClose} title={reminder ? 'Editar recordatorio' : 'Nuevo recordatorio 🔔'}>
+      <div className="stack">
+        <div className="field">
+          <label>¿Qué debes pagar?</label>
+          <div className="rowflex">
+            <input
+              className="input emoji-input"
+              value={emoji}
+              onChange={(e) => setEmoji(lastEmoji(e.target.value))}
+              aria-label="Emoji"
+            />
+            <input
+              className="input"
+              placeholder="Ej: Arriendo, Netflix, Luz…"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={{ flex: 1 }}
+              autoFocus
+            />
+          </div>
+          <div className="chips-scroll no-scrollbar" style={{ marginTop: 2 }}>
+            {REM_EMOJIS.map((e) => (
+              <button key={e} className={`emoji-chip ${emoji === e ? 'emoji-chip--on' : ''}`} onClick={() => setEmoji(e)}>
+                {e}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="field">
+          <label>Monto (opcional)</label>
+          <input
+            className="input"
+            inputMode="decimal"
+            placeholder="0"
+            value={amountRaw}
+            onChange={(e) => setAmountRaw(e.target.value)}
+          />
+        </div>
+
+        {accounts.length > 0 && (
+          <div className="field">
+            <label>Cuenta (opcional)</label>
+            <div className="chips-scroll no-scrollbar">
+              <button className={`chip ${accountId === '' ? 'chip--active' : ''}`} onClick={() => setAccountId('')}>
+                Ninguna
+              </button>
+              {accounts.map((a) => (
+                <button
+                  key={a.id}
+                  className={`chip ${accountId === a.id ? 'chip--active' : ''}`}
+                  onClick={() => setAccountId(a.id)}
+                >
+                  {a.emoji} {a.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="field">
+          <label>Tipo</label>
+          <div className="rowflex" style={{ gap: 8 }}>
+            <button className={`chip ${!periodic ? 'chip--active' : ''}`} onClick={() => setPeriodic(false)}>
+              Una vez
+            </button>
+            <button className={`chip ${periodic ? 'chip--active' : ''}`} onClick={() => setPeriodic(true)}>
+              Periódico
+            </button>
+          </div>
+        </div>
+
+        {periodic && (
+          <div className="field">
+            <label>Cada cuánto</label>
+            <div className="rowflex" style={{ flexWrap: 'wrap', gap: 8 }}>
+              {FREQS.map((f) => (
+                <button
+                  key={f.key}
+                  className={`chip ${freq === f.key ? 'chip--active' : ''}`}
+                  onClick={() => setFreq(f.key)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="field">
+          <label>{periodic ? 'Próximo pago' : 'Fecha de pago'}</label>
+          <input className="input" type="date" value={dayKey} onChange={(e) => setDayKey(e.target.value)} />
+        </div>
+
+        <div className="field">
+          <label>Nota (opcional)</label>
+          <input className="input" placeholder="Ej: pagar antes del 5…" value={note} onChange={(e) => setNote(e.target.value)} />
+        </div>
+
+        {reminder && (
+          <label className="rem-toggle">
+            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+            <span>Activo (recuérdame este pago)</span>
+          </label>
+        )}
+
+        <button className="btn btn--primary btn--block" disabled={!canSave} onClick={save}>
+          {reminder ? 'Guardar cambios' : 'Crear recordatorio'}
+        </button>
+
+        {onPaid && !reminder?.done && (
+          <button className="btn btn--income btn--block" onClick={onPaid}>
+            ✅ Ya lo pagué
+          </button>
+        )}
+
+        {onDelete && (
+          <button className="btn btn--ghost btn--block" onClick={onDelete}>
+            🗑️ Borrar recordatorio
+          </button>
+        )}
+      </div>
+    </Sheet>
   )
 }
 

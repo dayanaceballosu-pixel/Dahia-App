@@ -12,11 +12,12 @@ import { effectiveLook } from '../data/shop'
 import { totalsByCurrency, pendingTransfers, sortedDesc } from '../data/selectors'
 import { accountCurrency } from '../data/types'
 import { weekProgress } from '../data/tokens'
+import { pendingCount } from '../data/reminders'
 import { localDayKey } from '../lib/date'
 import './Home.css'
 
 export default function Home() {
-  const { profile, accounts, movements, gamification, goalsMet, tokenEntries, workStats, claimDaily, updateProfile } = useApp()
+  const { profile, accounts, movements, gamification, goalsMet, tokenEntries, workStats, reminders, claimDaily, updateProfile } = useApp()
   const { openAdd } = useSheets()
   const navigate = useNavigate()
   const [mood, setMood] = useState<CatMood>('idle')
@@ -29,6 +30,7 @@ export default function Home() {
   )
   const pendings = useMemo(() => pendingTransfers(movements), [movements])
   const tokWeek = useMemo(() => weekProgress(tokenEntries, workStats, 0), [tokenEntries, workStats])
+  const remPending = useMemo(() => pendingCount(reminders), [reminders])
   const recent = useMemo(() => sortedDesc(movements).slice(0, 4), [movements])
   const look = useMemo(
     () => effectiveLook(gamification, new Date().getMonth() + 1, goalsMet),
@@ -117,6 +119,18 @@ export default function Home() {
               {pendings.length} {pendings.length === 1 ? 'transferencia en camino' : 'transferencias en camino'}
             </b>
             <span className="dailycard__sub">Confírmalas cuando el dinero llegue de verdad 💸</span>
+          </span>
+          <span className="pendingcard__cta">Ver</span>
+        </button>
+      )}
+
+      {/* Recordatorios de pago pendientes */}
+      {remPending > 0 && (
+        <button className="pendingcard" onClick={() => navigate('/cuentas')}>
+          <span className="pendingcard__ic">🔔</span>
+          <span className="grow">
+            <b>{remPending} {remPending === 1 ? 'pago por hacer' : 'pagos por hacer'}</b>
+            <span className="dailycard__sub">Revisa tus recordatorios en Cuentas 🗓️</span>
           </span>
           <span className="pendingcard__cta">Ver</span>
         </button>

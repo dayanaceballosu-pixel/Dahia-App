@@ -99,6 +99,24 @@ export interface WorkStats {
   weekGoals: Record<string, number>
 }
 
+/* ----- Recordatorios de pago (dentro de Cuentas) ----- */
+export type ReminderFreq = 'weekly' | 'biweekly' | 'monthly' | 'bimonthly'
+
+export interface PaymentReminder {
+  id: ID
+  name: string
+  emoji?: string
+  amount?: number            // centavos (opcional)
+  accountId?: ID             // cuenta de la que se paga (opcional)
+  periodic: boolean          // true = periódico, false = una sola vez
+  freq?: ReminderFreq        // solo si periodic
+  nextDate: number           // timestamp del próximo pago
+  note?: string
+  active: boolean            // se puede desactivar sin borrar
+  done?: boolean             // 'una vez' ya pagado
+  createdAt: number
+}
+
 export interface DataSnapshot {
   profile: Profile
   accounts: Account[]
@@ -107,6 +125,7 @@ export interface DataSnapshot {
   gamification: Gamification
   tokenEntries: TokenEntry[]
   workStats: WorkStats
+  reminders: PaymentReminder[]
 }
 
 /* ----- Efecto de cada movimiento sobre el saldo de una cuenta ----- */

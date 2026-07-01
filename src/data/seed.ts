@@ -87,5 +87,6 @@ export function emptySnapshot(): DataSnapshot {
     gamification: defaultGamification(),
     tokenEntries: [],
     workStats: defaultWorkStats(),
+    reminders: [],
   }
 }

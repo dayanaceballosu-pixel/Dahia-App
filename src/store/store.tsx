@@ -19,6 +19,7 @@ import type {
   ID,
   Movement,
   MovementType,
+  PaymentReminder,
   Profile,
   TokenEntry,
   WorkStats,
@@ -26,6 +27,7 @@ import type {
 import { emptySnapshot } from '../data/seed'
 import { FREE_DEFAULTS, isUnlocked, itemById, inSeason, SHOP_ITEMS } from '../data/shop'
 import { lockGoalsMet, goalsMet as computeGoalsMet } from '../data/tokens'
+import { advanceDate } from '../data/reminders'
 import { uid } from '../lib/id'
 import { localDayKey, daysBetween } from '../lib/date'
 
@@ -59,6 +61,7 @@ interface AppContextValue {
   workStats: WorkStats
   /** nº de metas semanales cumplidas (derivado) → desbloquea premios glam */
   goalsMet: number
+  reminders: PaymentReminder[]
 
   // perfil / ajustes
   updateProfile: (patch: Partial<Profile>) => void
@@ -84,6 +87,12 @@ interface AppContextValue {
   updateTokenEntry: (entry: TokenEntry) => void
   deleteTokenEntry: (id: ID) => void
   setWeeklyGoal: (goal: number) => void
+
+  // recordatorios de pago
+  addReminder: (data: Omit<PaymentReminder, 'id' | 'createdAt'>) => PaymentReminder
+  updateReminder: (reminder: PaymentReminder) => void
+  deleteReminder: (id: ID) => void
+  markReminderPaid: (id: ID) => void
 
   // gamificación (por racha)
   claimDaily: () => ClaimResult
@@ -354,6 +363,56 @@ export function AppProvider({
     [provider],
   )
 
+  /* -------- recordatorios de pago -------- */
+  const addReminder = useCallback(
+    (data: Omit<PaymentReminder, 'id' | 'createdAt'>) => {
+      const reminder: PaymentReminder = { ...data, id: uid('rem'), createdAt: Date.now() }
+      setSnap((s) => {
+        provider.upsertReminder(reminder)
+        return { ...s, reminders: [...s.reminders, reminder] }
+      })
+      return reminder
+    },
+    [provider],
+  )
+
+  const updateReminder = useCallback(
+    (reminder: PaymentReminder) => {
+      setSnap((s) => {
+        provider.upsertReminder(reminder)
+        return { ...s, reminders: s.reminders.map((r) => (r.id === reminder.id ? reminder : r)) }
+      })
+    },
+    [provider],
+  )
+
+  const deleteReminder = useCallback(
+    (id: ID) => {
+      setSnap((s) => {
+        provider.removeReminder(id)
+        return { ...s, reminders: s.reminders.filter((r) => r.id !== id) }
+      })
+    },
+    [provider],
+  )
+
+  // "Ya lo pagué": periódico → salta a la próxima fecha; una vez → queda hecho.
+  const markReminderPaid = useCallback(
+    (id: ID) => {
+      setSnap((s) => {
+        const r = s.reminders.find((x) => x.id === id)
+        if (!r) return s
+        const updated: PaymentReminder =
+          r.periodic && r.freq
+            ? { ...r, nextDate: advanceDate(r.nextDate, r.freq) }
+            : { ...r, done: true }
+        provider.upsertReminder(updated)
+        return { ...s, reminders: s.reminders.map((x) => (x.id === id ? updated : x)) }
+      })
+    },
+    [provider],
+  )
+
   /* -------- racha diaria -------- */
   const claimDaily = useCallback((): ClaimResult => {
     const today = localDayKey()
@@ -459,11 +518,16 @@ export function AppProvider({
       tokenEntries: snap.tokenEntries,
       workStats: snap.workStats,
       goalsMet: computeGoalsMet(snap.tokenEntries, snap.workStats),
+      reminders: snap.reminders,
       updateProfile,
       addTokenEntry,
       updateTokenEntry,
       deleteTokenEntry,
       setWeeklyGoal,
+      addReminder,
+      updateReminder,
+      deleteReminder,
+      markReminderPaid,
       addAccount,
       updateAccount,
       archiveAccount,
@@ -489,6 +553,10 @@ export function AppProvider({
       updateTokenEntry,
       deleteTokenEntry,
       setWeeklyGoal,
+      addReminder,
+      updateReminder,
+      deleteReminder,
+      markReminderPaid,
       addAccount,
       updateAccount,
       archiveAccount,
