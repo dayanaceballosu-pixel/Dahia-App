@@ -5,13 +5,11 @@ import BottomNav, { Fab } from './BottomNav'
 import AddSheet from './AddSheet'
 import BuddyCat, { ROUTE_CONTEXT } from './BuddyCat'
 import { SheetsContext } from './SheetsContext'
-import { useApp } from '../store/store'
 import type { Movement } from '../data/types'
 
 export default function Layout() {
   const [addOpen, setAddOpen] = useState(false)
   const [edit, setEdit] = useState<Movement | null>(null)
-  const { profile } = useApp()
   const loc = useLocation()
   const context = ROUTE_CONTEXT[loc.pathname]
 
@@ -29,9 +27,7 @@ export default function Layout() {
 
         {/* El gatito de la barra: entra/sale deslizando por el costado */}
         <AnimatePresence>
-          {context && profile.catPresence !== 'low' && (
-            <BuddyCat key="buddy" context={context} />
-          )}
+          {context && <BuddyCat key="buddy" context={context} />}
         </AnimatePresence>
 
         <BottomNav />

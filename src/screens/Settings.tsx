@@ -79,23 +79,6 @@ export default function Settings() {
             placeholder="Michi"
           />
         </div>
-        <div className="spread">
-          <span className="grow">
-            <b style={{ fontSize: 14 }}>Presencia</b>
-            <p className="screen-sub">Qué tanto aparece haciendo cositas</p>
-          </span>
-          <div className="rowflex" style={{ gap: 6 }}>
-            {(['full', 'medium', 'low'] as const).map((p) => (
-              <button
-                key={p}
-                className={`chip ${profile.catPresence === p ? 'chip--active' : ''}`}
-                onClick={() => updateProfile({ catPresence: p })}
-              >
-                {p === 'full' ? 'Mucho' : p === 'medium' ? 'Medio' : 'Poco'}
-              </button>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* Racha */}

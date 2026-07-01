@@ -16,8 +16,8 @@ export const ROUTE_CONTEXT: Record<string, CatContext> = {
 }
 
 export default function BuddyCat({ context }: { context: CatContext }) {
-  const { profile, gamification } = useApp()
-  const wander = profile.catPresence === 'full'
+  const { gamification } = useApp()
+  const wander = true // el gatito siempre está "Mucho" (anda haciendo cositas)
   const look = effectiveLook(gamification, new Date().getMonth() + 1)
   return (
     <motion.div
