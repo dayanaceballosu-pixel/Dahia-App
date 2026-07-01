@@ -15,6 +15,7 @@ import type {
   Gamification,
   ID,
   Movement,
+  Note,
   PaymentReminder,
   Profile,
   TokenEntry,
@@ -67,12 +68,13 @@ export class FirebaseProvider implements DataProvider {
     }
 
     const data = userSnap.data()
-    const [accSnap, catSnap, movSnap, tokSnap, remSnap] = await Promise.all([
+    const [accSnap, catSnap, movSnap, tokSnap, remSnap, notSnap] = await Promise.all([
       getDocs(this.coll('accounts')),
       getDocs(this.coll('categories')),
       getDocs(this.coll('movements')),
       getDocs(this.coll('tokenEntries')),
       getDocs(this.coll('reminders')),
+      getDocs(this.coll('notes')),
     ])
 
     return {
@@ -84,6 +86,7 @@ export class FirebaseProvider implements DataProvider {
       movements: movSnap.docs.map((d) => d.data() as Movement),
       tokenEntries: tokSnap.docs.map((d) => d.data() as TokenEntry),
       reminders: remSnap.docs.map((d) => d.data() as PaymentReminder),
+      notes: notSnap.docs.map((d) => d.data() as Note),
     }
   }
 
@@ -133,14 +136,22 @@ export class FirebaseProvider implements DataProvider {
     await deleteDoc(this.itemRef('reminders', id))
   }
 
+  async upsertNote(note: Note): Promise<void> {
+    await setDoc(this.itemRef('notes', note.id), sanitize(note))
+  }
+  async removeNote(id: ID): Promise<void> {
+    await deleteDoc(this.itemRef('notes', id))
+  }
+
   async reset(): Promise<void> {
     const seed = emptySnapshot()
-    const [accSnap, catSnap, movSnap, tokSnap, remSnap] = await Promise.all([
+    const [accSnap, catSnap, movSnap, tokSnap, remSnap, notSnap] = await Promise.all([
       getDocs(this.coll('accounts')),
       getDocs(this.coll('categories')),
       getDocs(this.coll('movements')),
       getDocs(this.coll('tokenEntries')),
       getDocs(this.coll('reminders')),
+      getDocs(this.coll('notes')),
     ])
     await Promise.all([
       ...accSnap.docs.map((d) => deleteDoc(d.ref)),
@@ -148,6 +159,7 @@ export class FirebaseProvider implements DataProvider {
       ...movSnap.docs.map((d) => deleteDoc(d.ref)),
       ...tokSnap.docs.map((d) => deleteDoc(d.ref)),
       ...remSnap.docs.map((d) => deleteDoc(d.ref)),
+      ...notSnap.docs.map((d) => deleteDoc(d.ref)),
     ])
     await setDoc(this.userRef(), {
       profile: seed.profile,

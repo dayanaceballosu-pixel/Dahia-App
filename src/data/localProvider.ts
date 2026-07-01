@@ -6,6 +6,7 @@ import type {
   Gamification,
   ID,
   Movement,
+  Note,
   PaymentReminder,
   Profile,
   TokenEntry,
@@ -38,6 +39,7 @@ function read(): DataSnapshot {
       tokenEntries: parsed.tokenEntries ?? [],
       workStats: { ...base.workStats, ...parsed.workStats },
       reminders: parsed.reminders ?? [],
+      notes: parsed.notes ?? [],
     }
   } catch {
     return emptySnapshot()
@@ -136,6 +138,18 @@ export class LocalProvider implements DataProvider {
 
   async removeReminder(id: ID): Promise<void> {
     this.snap.reminders = this.snap.reminders.filter((r) => r.id !== id)
+    this.persist()
+  }
+
+  async upsertNote(note: Note): Promise<void> {
+    const i = this.snap.notes.findIndex((n) => n.id === note.id)
+    if (i >= 0) this.snap.notes[i] = note
+    else this.snap.notes.push(note)
+    this.persist()
+  }
+
+  async removeNote(id: ID): Promise<void> {
+    this.snap.notes = this.snap.notes.filter((n) => n.id !== id)
     this.persist()
   }
 

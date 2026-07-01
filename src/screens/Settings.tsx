@@ -49,6 +49,14 @@ export default function Settings() {
           </span>
           <span className="row__right">›</span>
         </button>
+        <button className="row" onClick={() => navigate('/notas')} style={{ width: '100%', textAlign: 'left' }}>
+          <span className="row__icon">🎀</span>
+          <span className="row__main">
+            <span className="row__title">Notitas</span>
+            <span className="row__sub">Tus ideas, listas y recados 💭</span>
+          </span>
+          <span className="row__right">›</span>
+        </button>
       </div>
 
       {/* Tema */}

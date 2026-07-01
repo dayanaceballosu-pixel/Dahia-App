@@ -5,6 +5,7 @@ import type {
   Gamification,
   ID,
   Movement,
+  Note,
   PaymentReminder,
   Profile,
   TokenEntry,
@@ -42,6 +43,9 @@ export interface DataProvider {
 
   upsertReminder(reminder: PaymentReminder): Promise<void>
   removeReminder(id: ID): Promise<void>
+
+  upsertNote(note: Note): Promise<void>
+  removeNote(id: ID): Promise<void>
 
   /** Borra todo (útil para "empezar de cero" o pruebas). */
   reset(): Promise<void>

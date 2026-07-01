@@ -88,5 +88,6 @@ export function emptySnapshot(): DataSnapshot {
     tokenEntries: [],
     workStats: defaultWorkStats(),
     reminders: [],
+    notes: [],
   }
 }

@@ -17,7 +17,7 @@ import { localDayKey } from '../lib/date'
 import './Home.css'
 
 export default function Home() {
-  const { profile, accounts, movements, gamification, goalsMet, tokenEntries, workStats, reminders, claimDaily, updateProfile } = useApp()
+  const { profile, accounts, movements, gamification, goalsMet, tokenEntries, workStats, reminders, notes, claimDaily, updateProfile } = useApp()
   const { openAdd } = useSheets()
   const navigate = useNavigate()
   const [mood, setMood] = useState<CatMood>('idle')
@@ -153,6 +153,20 @@ export default function Home() {
           ) : (
             <span className="tokentile__sub">Lleva tu registro y ponte metas 🎯</span>
           )}
+        </span>
+        <span className="tokentile__cta">›</span>
+      </button>
+
+      {/* Acceso a Notitas */}
+      <button className="tokentile notestile" onClick={() => navigate('/notas')}>
+        <span className="tokentile__ic">🎀</span>
+        <span className="grow">
+          <b>Notitas</b>
+          <span className="tokentile__sub">
+            {notes.length > 0
+              ? `${notes.length} ${notes.length === 1 ? 'notita guardada' : 'notitas guardadas'} 💭`
+              : 'Anota ideas, listas y recados 💭'}
+          </span>
         </span>
         <span className="tokentile__cta">›</span>
       </button>

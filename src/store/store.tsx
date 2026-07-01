@@ -19,6 +19,7 @@ import type {
   ID,
   Movement,
   MovementType,
+  Note,
   PaymentReminder,
   Profile,
   TokenEntry,
@@ -62,6 +63,7 @@ interface AppContextValue {
   /** nº de metas semanales cumplidas (derivado) → desbloquea premios glam */
   goalsMet: number
   reminders: PaymentReminder[]
+  notes: Note[]
 
   // perfil / ajustes
   updateProfile: (patch: Partial<Profile>) => void
@@ -93,6 +95,11 @@ interface AppContextValue {
   updateReminder: (reminder: PaymentReminder) => void
   deleteReminder: (id: ID) => void
   markReminderPaid: (id: ID) => void
+
+  // notitas
+  addNote: (data: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => Note
+  updateNote: (note: Note) => void
+  deleteNote: (id: ID) => void
 
   // gamificación (por racha)
   claimDaily: () => ClaimResult
@@ -413,6 +420,41 @@ export function AppProvider({
     [provider],
   )
 
+  /* -------- notitas -------- */
+  const addNote = useCallback(
+    (data: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const now = Date.now()
+      const note: Note = { ...data, id: uid('note'), createdAt: now, updatedAt: now }
+      setSnap((s) => {
+        provider.upsertNote(note)
+        return { ...s, notes: [...s.notes, note] }
+      })
+      return note
+    },
+    [provider],
+  )
+
+  const updateNote = useCallback(
+    (note: Note) => {
+      const next = { ...note, updatedAt: Date.now() }
+      setSnap((s) => {
+        provider.upsertNote(next)
+        return { ...s, notes: s.notes.map((n) => (n.id === next.id ? next : n)) }
+      })
+    },
+    [provider],
+  )
+
+  const deleteNote = useCallback(
+    (id: ID) => {
+      setSnap((s) => {
+        provider.removeNote(id)
+        return { ...s, notes: s.notes.filter((n) => n.id !== id) }
+      })
+    },
+    [provider],
+  )
+
   /* -------- racha diaria -------- */
   const claimDaily = useCallback((): ClaimResult => {
     const today = localDayKey()
@@ -519,6 +561,7 @@ export function AppProvider({
       workStats: snap.workStats,
       goalsMet: computeGoalsMet(snap.tokenEntries, snap.workStats),
       reminders: snap.reminders,
+      notes: snap.notes,
       updateProfile,
       addTokenEntry,
       updateTokenEntry,
@@ -528,6 +571,9 @@ export function AppProvider({
       updateReminder,
       deleteReminder,
       markReminderPaid,
+      addNote,
+      updateNote,
+      deleteNote,
       addAccount,
       updateAccount,
       archiveAccount,
@@ -557,6 +603,9 @@ export function AppProvider({
       updateReminder,
       deleteReminder,
       markReminderPaid,
+      addNote,
+      updateNote,
+      deleteNote,
       addAccount,
       updateAccount,
       archiveAccount,

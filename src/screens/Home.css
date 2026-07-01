@@ -157,6 +157,11 @@
   background: linear-gradient(90deg, var(--primary), var(--primary-strong));
 }
 
+/* variante Notitas (lavanda → menta) */
+.notestile { background: linear-gradient(100deg, #e9e0ff, #d6f3e6); border-color: #cdbff0; }
+.notestile b { color: #5a4a8f; }
+.notestile .tokentile__cta { color: #8f79c9; }
+
 /* Toast */
 .toast-pop {
   position: fixed;

@@ -117,6 +117,28 @@ export interface PaymentReminder {
   createdAt: number
 }
 
+/* ----- Notitas (tablero de stickers) ----- */
+export type NoteColor = 'pink' | 'lav' | 'mint' | 'peach' | 'yellow'
+
+export interface NoteItem {
+  id: string
+  text: string
+  done: boolean
+}
+
+export interface Note {
+  id: ID
+  emoji?: string
+  title?: string
+  body?: string              // texto libre (cuando no es checklist)
+  items?: NoteItem[]         // casillas (cuando isChecklist)
+  isChecklist: boolean
+  color: NoteColor
+  pinned: boolean
+  createdAt: number
+  updatedAt: number
+}
+
 export interface DataSnapshot {
   profile: Profile
   accounts: Account[]
@@ -126,6 +148,7 @@ export interface DataSnapshot {
   tokenEntries: TokenEntry[]
   workStats: WorkStats
   reminders: PaymentReminder[]
+  notes: Note[]
 }
 
 /* ----- Efecto de cada movimiento sobre el saldo de una cuenta ----- */
