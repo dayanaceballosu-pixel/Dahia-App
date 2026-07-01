@@ -71,8 +71,8 @@ export default function AddSheet({ open, edit, onClose }: AddSheetProps) {
       setCategoryId('')
       setNote('')
       setDirection('in')
-      setAccountId(active[0]?.id ?? '')
-      setToAccountId(active[1]?.id ?? '')
+      setAccountId('') // sin cuenta por defecto: siempre hay que elegirla
+      setToAccountId('')
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
