@@ -17,6 +17,11 @@ const SKINS: Record<string, SkinColors> = {
   cream: { body: '#ffe9c9', shade: '#ffd9a6', ear: '#ffc987', earIn: '#ffb066', belly: '#fff8ec' },
   gray:  { body: '#d8d8e8', shade: '#c2c2d6', ear: '#b6b6cc', earIn: '#9a9ab2', belly: '#f3f3fb' },
   black: { body: '#6e6680', shade: '#5b5468', ear: '#4d4659', earIn: '#3c3647', belly: '#ada6bd' },
+  // Premios glam (se ganan cumpliendo metas de tokens)
+  rubi:     { body: '#e0556b', shade: '#c8455c', ear: '#bb3a52', earIn: '#9e2f45', belly: '#ffd9df' },
+  midnight: { body: '#3b3654', shade: '#2f2a45', ear: '#282338', earIn: '#1c1830', belly: '#726b94' },
+  gold:     { body: '#e8c56b', shade: '#d8ae4c', ear: '#caa03c', earIn: '#b0862c', belly: '#fff2cf' },
+  velvet:   { body: '#8a5aa8', shade: '#764c92', ear: '#664080', earIn: '#52336a', belly: '#e6d4f2' },
 }
 
 type Expression = 'open' | 'happy' | 'teary' | 'closed' | 'wide'
@@ -353,6 +358,50 @@ export default function Cat({
             </g>
           )}
 
+          {/* Boa de plumas (Glam) */}
+          {equipped.includes('gl_boa') && (
+            <g className="cat__acc">
+              <g fill="#ff9ecb">
+                <circle cx="72" cy="158" r="14" />
+                <circle cx="90" cy="164" r="15" />
+                <circle cx="110" cy="167" r="15" />
+                <circle cx="130" cy="167" r="15" />
+                <circle cx="150" cy="164" r="15" />
+                <circle cx="168" cy="158" r="14" />
+              </g>
+              <g fill="#ffc6e2">
+                <circle cx="80" cy="156" r="6" />
+                <circle cx="100" cy="162" r="6" />
+                <circle cx="120" cy="164" r="6" />
+                <circle cx="140" cy="162" r="6" />
+                <circle cx="160" cy="156" r="6" />
+              </g>
+              <g fill="#fff" opacity="0.6">
+                <circle cx="86" cy="160" r="2.5" />
+                <circle cx="112" cy="164" r="2.5" />
+                <circle cx="138" cy="164" r="2.5" />
+                <circle cx="162" cy="159" r="2.5" />
+              </g>
+            </g>
+          )}
+
+          {/* Gargantilla de encaje (Glam) */}
+          {equipped.includes('gl_choker') && (
+            <g className="cat__acc">
+              <path d="M80 150 q40 20 80 0 l0 7 q-40 20 -80 0 Z" fill="#2a2433" />
+              <g fill="none" stroke="#2a2433" strokeWidth="2">
+                <path d="M84 160 q4 6 8 0" />
+                <path d="M96 163 q4 6 8 0" />
+                <path d="M108 165 q4 6 8 0" />
+                <path d="M120 166 q4 6 8 0" />
+                <path d="M132 165 q4 6 8 0" />
+                <path d="M144 163 q4 6 8 0" />
+                <path d="M156 160 q4 6 8 0" />
+              </g>
+              <path d="M120 168 c-3 -4 -9 -1 -9 3 c0 4 9 8 9 8 c0 0 9 -4 9 -8 c0 -4 -6 -7 -9 -3 z" fill="#e0416b" />
+            </g>
+          )}
+
           {/* bufanda (detrás de la cabeza) */}
           {equipped.includes('scarf') && (
             <g className="cat__acc">
@@ -686,6 +735,68 @@ export default function Cat({
               <g stroke="#c99a12" strokeWidth="1.6" strokeLinecap="round">
                 <line x1="106" y1="132" x2="134" y2="132" />
                 <line x1="108" y1="137" x2="132" y2="137" />
+              </g>
+            </g>
+          )}
+
+          {/* ===== Premios GLAM de carita ===== */}
+
+          {/* Maquillaje coqueto: labios + pestañas (Glam) */}
+          {equipped.includes('gl_makeup') && (
+            <g className="cat__acc">
+              <g stroke="#3a2b36" strokeWidth="2" strokeLinecap="round">
+                <path d="M86 106 l-6 -4" />
+                <path d="M90 103 l-4 -5" />
+                <path d="M154 106 l6 -4" />
+                <path d="M150 103 l4 -5" />
+              </g>
+              <path d="M107 130 Q113 127 120 129 Q127 127 133 130 Q128 141 120 142 Q112 141 107 130 Z" fill="#d61f52" />
+              <path d="M111 131 Q120 134 129 131" fill="none" stroke="#8e1038" strokeWidth="1.3" />
+              <ellipse cx="115" cy="133" rx="2.2" ry="1.3" fill="#fff" opacity="0.55" />
+            </g>
+          )}
+
+          {/* Aretes de joya (Glam) — gema rosa redonda (no lágrima) */}
+          {equipped.includes('gl_earrings') && (
+            <g className="cat__acc">
+              <circle cx="72" cy="139" r="2" fill="#ffd94a" />
+              <line x1="72" y1="141" x2="72" y2="146" stroke="#e8c34a" strokeWidth="1.5" />
+              <circle cx="72" cy="150" r="4.6" fill="#ff5fb0" stroke="#e03d90" strokeWidth="0.9" />
+              <circle cx="70.4" cy="148.4" r="1.3" fill="#fff" opacity="0.85" />
+              <circle cx="168" cy="139" r="2" fill="#ffd94a" />
+              <line x1="168" y1="141" x2="168" y2="146" stroke="#e8c34a" strokeWidth="1.5" />
+              <circle cx="168" cy="150" r="4.6" fill="#ff5fb0" stroke="#e03d90" strokeWidth="0.9" />
+              <circle cx="166.4" cy="148.4" r="1.3" fill="#fff" opacity="0.85" />
+            </g>
+          )}
+
+          {/* Moño de encaje (Glam) */}
+          {equipped.includes('gl_lacebow') && (
+            <g className="cat__acc">
+              <path d="M90 56 q-18 -12 -18 4 q0 14 18 6 z" fill="#2a2433" />
+              <path d="M90 56 q18 -12 18 4 q0 14 -18 6 z" fill="#2a2433" />
+              <circle cx="90" cy="62" r="6" fill="#4a4356" />
+              <g fill="#6a6280">
+                <circle cx="80" cy="58" r="1.2" />
+                <circle cx="84" cy="63" r="1.2" />
+                <circle cx="100" cy="58" r="1.2" />
+                <circle cx="96" cy="63" r="1.2" />
+              </g>
+            </g>
+          )}
+
+          {/* Antifaz de encaje (Glam) — deja ver los ojitos */}
+          {equipped.includes('gl_mask') && (
+            <g className="cat__acc">
+              <path
+                fillRule="evenodd"
+                d="M70 104 Q120 92 170 104 Q168 124 150 126 Q132 128 120 120 Q108 128 90 126 Q72 124 70 104 Z M86 112 a12 9 0 1 0 24 0 a12 9 0 1 0 -24 0 Z M130 112 a12 9 0 1 0 24 0 a12 9 0 1 0 -24 0 Z"
+                fill="#241f2e"
+              />
+              <path d="M70 104 l-8 -3 M170 104 l8 -3" stroke="#241f2e" strokeWidth="3" strokeLinecap="round" />
+              <g stroke="#5a5270" strokeWidth="1" fill="none">
+                <path d="M100 100 q4 4 0 8" />
+                <path d="M140 100 q-4 4 0 8" />
               </g>
             </g>
           )}

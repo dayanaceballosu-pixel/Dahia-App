@@ -6,6 +6,8 @@ import type {
   ID,
   Movement,
   Profile,
+  TokenEntry,
+  WorkStats,
 } from './types'
 
 /* ===========================================================
@@ -32,6 +34,10 @@ export interface DataProvider {
   removeMovement(id: ID): Promise<void>
 
   saveGamification(gamification: Gamification): Promise<void>
+
+  upsertTokenEntry(entry: TokenEntry): Promise<void>
+  removeTokenEntry(id: ID): Promise<void>
+  saveWorkStats(workStats: WorkStats): Promise<void>
 
   /** Borra todo (útil para "empezar de cero" o pruebas). */
   reset(): Promise<void>

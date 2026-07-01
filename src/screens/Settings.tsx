@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store/store'
+import { useAuth } from '../firebase/AuthProvider'
 import type { ThemePref } from '../data/types'
 
 const THEMES: { value: ThemePref; label: string; emoji: string }[] = [
@@ -9,7 +10,8 @@ const THEMES: { value: ThemePref; label: string; emoji: string }[] = [
 ]
 
 export default function Settings() {
-  const { profile, updateProfile, gamification, resetAll } = useApp()
+  const { profile, updateProfile, gamification } = useApp()
+  const { user, signOutUser } = useAuth()
   const navigate = useNavigate()
 
   return (
@@ -36,6 +38,14 @@ export default function Settings() {
           <span className="row__main">
             <span className="row__title">Estadísticas</span>
             <span className="row__sub">En qué entra y sale tu plata</span>
+          </span>
+          <span className="row__right">›</span>
+        </button>
+        <button className="row" onClick={() => navigate('/tokens')} style={{ width: '100%', textAlign: 'left' }}>
+          <span className="row__icon">✨</span>
+          <span className="row__main">
+            <span className="row__title">Mis Tokens</span>
+            <span className="row__sub">Registro de trabajo y metas 🎯</span>
           </span>
           <span className="row__right">›</span>
         </button>
@@ -100,22 +110,23 @@ export default function Settings() {
         <span className="streakpill">🔥 <b>{gamification.streak}</b></span>
       </section>
 
-      {/* Datos */}
+      {/* Cuenta */}
       <section className="card stack">
-        <p className="t-label">Datos</p>
-        <p className="screen-sub" style={{ marginBottom: 4 }}>
-          Por ahora tus datos viven en este dispositivo. Cuando conectemos la nube, se
-          sincronizarán solos.
-        </p>
+        <p className="t-label">Cuenta</p>
+        {user?.email && (
+          <p className="screen-sub" style={{ marginBottom: 4 }}>
+            Sesión iniciada como <b>{user.email}</b>. Tus datos se guardan de forma privada.
+          </p>
+        )}
         <button
           className="btn btn--ghost btn--block"
           onClick={() => {
-            if (confirm('¿Seguro? Esto borra TODOS los datos de prueba de este dispositivo.')) {
-              resetAll()
+            if (confirm('¿Cerrar sesión? Podrás volver a entrar con tu cuenta de Google.')) {
+              signOutUser()
             }
           }}
         >
-          🗑️ Borrar todo y empezar de cero
+          🚪 Cerrar sesión
         </button>
       </section>
 

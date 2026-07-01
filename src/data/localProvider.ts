@@ -7,6 +7,8 @@ import type {
   ID,
   Movement,
   Profile,
+  TokenEntry,
+  WorkStats,
 } from './types'
 import { emptySnapshot } from './seed'
 
@@ -32,6 +34,8 @@ function read(): DataSnapshot {
       categories: parsed.categories?.length ? parsed.categories : base.categories,
       movements: parsed.movements ?? [],
       gamification: { ...base.gamification, ...parsed.gamification },
+      tokenEntries: parsed.tokenEntries ?? [],
+      workStats: { ...base.workStats, ...parsed.workStats },
     }
   } catch {
     return emptySnapshot()
@@ -101,6 +105,23 @@ export class LocalProvider implements DataProvider {
 
   async saveGamification(gamification: Gamification): Promise<void> {
     this.snap.gamification = gamification
+    this.persist()
+  }
+
+  async upsertTokenEntry(entry: TokenEntry): Promise<void> {
+    const i = this.snap.tokenEntries.findIndex((t) => t.id === entry.id)
+    if (i >= 0) this.snap.tokenEntries[i] = entry
+    else this.snap.tokenEntries.push(entry)
+    this.persist()
+  }
+
+  async removeTokenEntry(id: ID): Promise<void> {
+    this.snap.tokenEntries = this.snap.tokenEntries.filter((t) => t.id !== id)
+    this.persist()
+  }
+
+  async saveWorkStats(workStats: WorkStats): Promise<void> {
+    this.snap.workStats = workStats
     this.persist()
   }
 

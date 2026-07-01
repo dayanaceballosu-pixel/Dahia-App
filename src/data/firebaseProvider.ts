@@ -16,8 +16,10 @@ import type {
   ID,
   Movement,
   Profile,
+  TokenEntry,
+  WorkStats,
 } from './types'
-import { defaultGamification, defaultProfile, emptySnapshot } from './seed'
+import { defaultGamification, defaultProfile, defaultWorkStats, emptySnapshot } from './seed'
 
 /* ===========================================================
    FirebaseProvider — guarda en Firestore, por usuario.
@@ -55,6 +57,7 @@ export class FirebaseProvider implements DataProvider {
       await setDoc(this.userRef(), {
         profile: seed.profile,
         gamification: seed.gamification,
+        workStats: seed.workStats,
       })
       await Promise.all(
         seed.categories.map((c) => setDoc(this.itemRef('categories', c.id), c)),
@@ -63,18 +66,21 @@ export class FirebaseProvider implements DataProvider {
     }
 
     const data = userSnap.data()
-    const [accSnap, catSnap, movSnap] = await Promise.all([
+    const [accSnap, catSnap, movSnap, tokSnap] = await Promise.all([
       getDocs(this.coll('accounts')),
       getDocs(this.coll('categories')),
       getDocs(this.coll('movements')),
+      getDocs(this.coll('tokenEntries')),
     ])
 
     return {
       profile: { ...defaultProfile(), ...(data.profile as Partial<Profile>) },
       gamification: { ...defaultGamification(), ...(data.gamification as Partial<Gamification>) },
+      workStats: { ...defaultWorkStats(), ...(data.workStats as Partial<WorkStats>) },
       accounts: accSnap.docs.map((d) => d.data() as Account),
       categories: catSnap.docs.map((d) => d.data() as Category),
       movements: movSnap.docs.map((d) => d.data() as Movement),
+      tokenEntries: tokSnap.docs.map((d) => d.data() as TokenEntry),
     }
   }
 
@@ -107,21 +113,34 @@ export class FirebaseProvider implements DataProvider {
     await deleteDoc(this.itemRef('movements', id))
   }
 
+  async upsertTokenEntry(entry: TokenEntry): Promise<void> {
+    await setDoc(this.itemRef('tokenEntries', entry.id), sanitize(entry))
+  }
+  async removeTokenEntry(id: ID): Promise<void> {
+    await deleteDoc(this.itemRef('tokenEntries', id))
+  }
+  async saveWorkStats(workStats: WorkStats): Promise<void> {
+    await setDoc(this.userRef(), { workStats }, { merge: true })
+  }
+
   async reset(): Promise<void> {
     const seed = emptySnapshot()
-    const [accSnap, catSnap, movSnap] = await Promise.all([
+    const [accSnap, catSnap, movSnap, tokSnap] = await Promise.all([
       getDocs(this.coll('accounts')),
       getDocs(this.coll('categories')),
       getDocs(this.coll('movements')),
+      getDocs(this.coll('tokenEntries')),
     ])
     await Promise.all([
       ...accSnap.docs.map((d) => deleteDoc(d.ref)),
       ...catSnap.docs.map((d) => deleteDoc(d.ref)),
       ...movSnap.docs.map((d) => deleteDoc(d.ref)),
+      ...tokSnap.docs.map((d) => deleteDoc(d.ref)),
     ])
     await setDoc(this.userRef(), {
       profile: seed.profile,
       gamification: seed.gamification,
+      workStats: seed.workStats,
     })
     await Promise.all(
       seed.categories.map((c) => setDoc(this.itemRef('categories', c.id), c)),

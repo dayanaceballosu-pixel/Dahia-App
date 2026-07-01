@@ -81,12 +81,32 @@ export interface Gamification {
   unlocked?: string[]            // (obsoleto)
 }
 
+/* ----- Registro de tokens de trabajo (webcam) + metas semanales ----- */
+export interface TokenEntry {
+  id: ID
+  date: number              // fecha del registro (timestamp)
+  tokens: number            // entero positivo
+  note?: string
+  createdAt: number
+}
+
+export interface WorkStats {
+  /** meta semanal en tokens (0 = aún sin meta puesta) */
+  weeklyGoal: number
+  /** meta "congelada" por semana (clave = lunes de la semana 'YYYY-MM-DD').
+   *  Se fija la primera vez que una semana cumple, para que subir la meta
+   *  luego no quite premios ya ganados. */
+  weekGoals: Record<string, number>
+}
+
 export interface DataSnapshot {
   profile: Profile
   accounts: Account[]
   categories: Category[]
   movements: Movement[]
   gamification: Gamification
+  tokenEntries: TokenEntry[]
+  workStats: WorkStats
 }
 
 /* ----- Efecto de cada movimiento sobre el saldo de una cuenta ----- */

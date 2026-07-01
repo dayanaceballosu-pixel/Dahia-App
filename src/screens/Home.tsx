@@ -11,11 +11,12 @@ import { useSheets } from '../components/SheetsContext'
 import { effectiveLook } from '../data/shop'
 import { totalsByCurrency, pendingTransfers, sortedDesc } from '../data/selectors'
 import { accountCurrency } from '../data/types'
+import { weekProgress } from '../data/tokens'
 import { localDayKey } from '../lib/date'
 import './Home.css'
 
 export default function Home() {
-  const { profile, accounts, movements, gamification, claimDaily, updateProfile } = useApp()
+  const { profile, accounts, movements, gamification, goalsMet, tokenEntries, workStats, claimDaily, updateProfile } = useApp()
   const { openAdd } = useSheets()
   const navigate = useNavigate()
   const [mood, setMood] = useState<CatMood>('idle')
@@ -27,8 +28,12 @@ export default function Home() {
     [accounts],
   )
   const pendings = useMemo(() => pendingTransfers(movements), [movements])
+  const tokWeek = useMemo(() => weekProgress(tokenEntries, workStats, 0), [tokenEntries, workStats])
   const recent = useMemo(() => sortedDesc(movements).slice(0, 4), [movements])
-  const look = useMemo(() => effectiveLook(gamification, new Date().getMonth() + 1), [gamification])
+  const look = useMemo(
+    () => effectiveLook(gamification, new Date().getMonth() + 1, goalsMet),
+    [gamification, goalsMet],
+  )
   const claimedToday = gamification.lastClaimDate === localDayKey()
 
   function flashToast(msg: string) {
@@ -116,6 +121,27 @@ export default function Home() {
           <span className="pendingcard__cta">Ver</span>
         </button>
       )}
+
+      {/* Acceso a Mis Tokens (registro de trabajo + metas) */}
+      <button className="tokentile" onClick={() => navigate('/tokens')}>
+        <span className="tokentile__ic">✨</span>
+        <span className="grow">
+          <b>Mis Tokens</b>
+          {workStats.weeklyGoal > 0 ? (
+            <>
+              <span className="tokentile__sub">
+                Semana: {Math.round(tokWeek.total).toLocaleString('es-CO')} / {Math.round(tokWeek.goal).toLocaleString('es-CO')} 🪙
+              </span>
+              <span className="tokentile__bar">
+                <span className="tokentile__fill" style={{ width: `${tokWeek.pct}%` }} />
+              </span>
+            </>
+          ) : (
+            <span className="tokentile__sub">Lleva tu registro y ponte metas 🎯</span>
+          )}
+        </span>
+        <span className="tokentile__cta">›</span>
+      </button>
 
       {/* Racha diaria */}
       {!claimedToday && (

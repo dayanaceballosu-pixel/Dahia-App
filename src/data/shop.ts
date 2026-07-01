@@ -21,6 +21,8 @@ export interface ShopItem {
   event?: 'mundial'
   /** para eventos: día (desde el inicio del evento) en que se desbloquea (0 = ya) */
   unlockDay?: number
+  /** premio GLAM: se desbloquea al cumplir N metas semanales (pestaña Glam 💋) */
+  unlockGoal?: number
 }
 
 /* ============================================================
@@ -82,6 +84,18 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'mn_boots', name: 'Guayos', emoji: '👟', unlockStreak: 0, kind: 'accessory', event: 'mundial', unlockDay: 5 },
   { id: 'mn_trophy', name: 'Copa del Mundo', emoji: '🏆', unlockStreak: 0, kind: 'accessory', event: 'mundial', unlockDay: 6 },
 
+  // ---- Premios GLAM 💋 (se desbloquean cumpliendo metas semanales) ----
+  { id: 'rubi', name: 'Rubí', emoji: '❤️‍🔥', unlockStreak: 0, kind: 'skin', unlockGoal: 1 },
+  { id: 'gl_makeup', name: 'Maquillaje coqueto', emoji: '💋', unlockStreak: 0, kind: 'accessory', unlockGoal: 2 },
+  { id: 'gl_choker', name: 'Gargantilla de encaje', emoji: '🖤', unlockStreak: 0, kind: 'accessory', unlockGoal: 3 },
+  { id: 'midnight', name: 'Medianoche', emoji: '🌑', unlockStreak: 0, kind: 'skin', unlockGoal: 4 },
+  { id: 'gl_earrings', name: 'Aretes de joya', emoji: '💎', unlockStreak: 0, kind: 'accessory', unlockGoal: 5 },
+  { id: 'gl_lacebow', name: 'Moño de encaje', emoji: '🎀', unlockStreak: 0, kind: 'accessory', unlockGoal: 6 },
+  { id: 'gold', name: 'Dorada', emoji: '✨', unlockStreak: 0, kind: 'skin', unlockGoal: 7 },
+  { id: 'gl_boa', name: 'Boa de plumas', emoji: '🪶', unlockStreak: 0, kind: 'accessory', unlockGoal: 8 },
+  { id: 'gl_mask', name: 'Antifaz de encaje', emoji: '🎭', unlockStreak: 0, kind: 'accessory', unlockGoal: 9 },
+  { id: 'velvet', name: 'Terciopelo', emoji: '💜', unlockStreak: 0, kind: 'skin', unlockGoal: 10 },
+
   // ---- Skins del gato ----
   { id: 'pink', name: 'Rosadita', emoji: '🐱', unlockStreak: 0, kind: 'skin' },
   { id: 'cream', name: 'Cremita', emoji: '🐈', unlockStreak: 12, kind: 'skin' },
@@ -123,8 +137,17 @@ export function unlocksInDays(item: ShopItem, today: string = localDayKey()): nu
   return Math.max(0, (item.unlockDay ?? 0) - mundialDay(today))
 }
 
-/** ¿Está desbloqueado? Eventos por calendario; el resto por racha máxima. */
-export function isUnlocked(item: ShopItem, g: Gamification, month: number, today: string = localDayKey()): boolean {
+/** ¿Está desbloqueado? Glam por metas cumplidas; eventos por calendario; resto por racha. */
+export function isUnlocked(
+  item: ShopItem,
+  g: Gamification,
+  month: number,
+  today: string = localDayKey(),
+  goalsMet = 0,
+): boolean {
+  if (item.unlockGoal != null) {
+    return goalsMet >= item.unlockGoal
+  }
   if (item.event === 'mundial') {
     return mundialDay(today) >= (item.unlockDay ?? 0)
   }
@@ -132,21 +155,23 @@ export function isUnlocked(item: ShopItem, g: Gamification, month: number, today
   return (g.bestStreak ?? 0) >= item.unlockStreak
 }
 
-function usable(id: string, g: Gamification, month: number): boolean {
+function usable(id: string, g: Gamification, month: number, goalsMet = 0): boolean {
   if (FREE_DEFAULTS.includes(id)) return true
   const it = itemById(id)
-  return !!it && isUnlocked(it, g, month)
+  return !!it && isUnlocked(it, g, month, localDayKey(), goalsMet)
 }
 
 /** "Look" del gato filtrado a SOLO lo desbloqueado (lo bloqueado no se muestra).
- *  Útil para limpiar accesorios que quedaron puestos de la tienda anterior. */
+ *  Útil para limpiar accesorios/skins que quedaron puestos pero ya no se tienen
+ *  (p. ej. un premio glam que se perdió al editar los tokens de esa semana). */
 export function effectiveLook(
   g: Gamification,
   month: number,
+  goalsMet = 0,
 ): { equipped: string[]; skin: string; background: string } {
   return {
-    equipped: (g.equipped ?? []).filter((id) => usable(id, g, month)),
-    skin: usable(g.skin, g, month) ? g.skin : 'pink',
-    background: usable(g.background, g, month) ? g.background : 'none',
+    equipped: (g.equipped ?? []).filter((id) => usable(id, g, month, goalsMet)),
+    skin: usable(g.skin, g, month, goalsMet) ? g.skin : 'pink',
+    background: usable(g.background, g, month, goalsMet) ? g.background : 'none',
   }
 }

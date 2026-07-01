@@ -1,4 +1,4 @@
-import type { Category, DataSnapshot, Gamification, Profile } from './types'
+import type { Category, DataSnapshot, Gamification, Profile, WorkStats } from './types'
 import { uid } from '../lib/id'
 
 /** Paleta pastel para categorías/cuentas. */
@@ -71,6 +71,13 @@ export function defaultGamification(): Gamification {
   }
 }
 
+export function defaultWorkStats(): WorkStats {
+  return {
+    weeklyGoal: 0,
+    weekGoals: {},
+  }
+}
+
 export function emptySnapshot(): DataSnapshot {
   return {
     profile: defaultProfile(),
@@ -78,5 +85,7 @@ export function emptySnapshot(): DataSnapshot {
     categories: seedCategories(),
     movements: [],
     gamification: defaultGamification(),
+    tokenEntries: [],
+    workStats: defaultWorkStats(),
   }
 }

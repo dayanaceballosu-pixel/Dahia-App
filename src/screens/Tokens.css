@@ -1,0 +1,113 @@
+/* ===== Mis Tokens ===== */
+.tokens { gap: 14px; }
+
+/* Tarjeta de meta + gato */
+.tok-goal {
+  position: relative;
+  text-align: center;
+  padding: 10px 18px 16px;
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(120% 120% at 50% 0%, var(--primary-tint), transparent 62%),
+    var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+.tok-goal__cat { display: flex; justify-content: center; margin-bottom: 2px; }
+
+.tok-goal__empty b { font-size: 16px; display: block; }
+.tok-goal__empty .btn { margin-top: 10px; }
+
+.tok-goal__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.tok-goal__label { font-size: 13px; font-weight: 700; color: var(--text-soft); }
+.tok-goal__edit { font-size: 12.5px; font-weight: 800; color: var(--primary-strong); }
+
+.tok-goal__nums { font-size: 15px; }
+.tok-goal__nums b { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+.tok-goal__nums span { color: var(--text-soft); font-weight: 700; }
+
+.tok-bar {
+  height: 14px;
+  border-radius: 999px;
+  background: var(--primary-tint);
+  overflow: hidden;
+  margin: 8px 0 6px;
+}
+.tok-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-strong));
+  transition: width 0.5s var(--ease-pop);
+}
+.tok-goal__msg { font-size: 13px; color: var(--text-soft); }
+.tok-goal__msg b { color: var(--primary-strong); }
+
+.tok-add { margin-top: 12px; }
+
+/* Pills de racha / récord / metas */
+.tok-pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.tok-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 12px 6px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.tok-pill__ic { font-size: 20px; }
+.tok-pill b { font-size: 17px; font-weight: 800; }
+.tok-pill span:last-child { font-size: 11px; color: var(--text-faint); font-weight: 700; }
+.tok-pill--tap:active { transform: scale(0.96); }
+
+/* Resumen del periodo */
+.tok-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.tok-summary__lbl { display: block; font-size: 12px; color: var(--text-faint); font-weight: 700; }
+.tok-summary__total b { font-size: 22px; font-weight: 800; }
+.tok-summary__cmp { text-align: right; font-size: 15px; font-weight: 800; }
+.tok-summary__cmp.up { color: var(--income); }
+.tok-summary__cmp.down { color: var(--expense); }
+.tok-summary__cmpsub { display: block; font-size: 10.5px; color: var(--text-faint); font-weight: 600; }
+
+/* Gráfica de barras */
+.tok-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 108px;
+  padding: 8px 10px 4px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.tok-chart__col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.tok-chart__barwrap { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.tok-chart__bar {
+  width: 72%;
+  min-height: 3px;
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, var(--primary), var(--primary-strong));
+  transition: height 0.4s var(--ease-pop);
+}
+.tok-chart__lbl { font-size: 10px; color: var(--text-faint); font-weight: 700; height: 12px; }
+
+.tok-hint { font-size: 12.5px; color: var(--text-soft); text-align: center; }
+.tok-hint b { color: var(--text); }

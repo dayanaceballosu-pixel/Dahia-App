@@ -17,10 +17,11 @@ import {
 } from '../data/shop'
 import './Shop.css'
 
-type TabKey = ItemKind | 'mundial'
+type TabKey = ItemKind | 'mundial' | 'glam'
 
 const TABS: { kind: TabKey; label: string; emoji: string }[] = [
   { kind: 'accessory', label: 'Accesorios', emoji: '🎀' },
+  { kind: 'glam', label: 'Glam', emoji: '💋' },
   { kind: 'mundial', label: 'Mundial', emoji: '⚽' },
   { kind: 'skin', label: 'Skins', emoji: '🐱' },
   { kind: 'background', label: 'Fondos', emoji: '🖼️' },
@@ -29,25 +30,29 @@ const TABS: { kind: TabKey; label: string; emoji: string }[] = [
 const MES = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
 export default function Shop() {
-  const { gamification, toggleEquip, selectSkin, selectBackground } = useApp()
+  const { gamification, goalsMet, toggleEquip, selectSkin, selectBackground } = useApp()
   const navigate = useNavigate()
   const [tab, setTab] = useState<TabKey>('accessory')
   const [preview, setPreview] = useState<ShopItem | null>(null)
   const month = new Date().getMonth() + 1
   const best = gamification.bestStreak ?? 0
-  const look = effectiveLook(gamification, month)
+  const look = effectiveLook(gamification, month, goalsMet)
   const daysLeft = mundialDaysLeft()
 
   const items = useMemo(
     () =>
       SHOP_ITEMS.filter((i) =>
-        tab === 'mundial' ? i.event === 'mundial' : i.kind === tab && !i.event,
+        tab === 'glam'
+          ? i.unlockGoal != null
+          : tab === 'mundial'
+            ? i.event === 'mundial'
+            : i.kind === tab && !i.event && i.unlockGoal == null,
       ),
     [tab],
   )
 
   function unlocked(item: ShopItem) {
-    return isUnlocked(item, gamification, month)
+    return isUnlocked(item, gamification, month, undefined, goalsMet)
   }
   function active(item: ShopItem) {
     if (item.kind === 'accessory') return gamification.equipped.includes(item.id)
@@ -56,6 +61,9 @@ export default function Shop() {
   }
 
   function statusLabel(item: ShopItem): { text: string; cls: string } {
+    if (item.unlockGoal != null && !unlocked(item)) {
+      return { text: `🔒 meta ${item.unlockGoal}`, cls: 'locked' }
+    }
     if (item.event === 'mundial' && !unlocked(item)) {
       const d = unlocksInDays(item)
       return { text: d <= 1 ? '🔒 mañana' : `🔒 en ${d} días`, cls: 'locked' }
@@ -101,6 +109,15 @@ export default function Shop() {
         ))}
       </div>
 
+      {/* Aviso Glam (premios por metas de tokens) */}
+      {tab === 'glam' && (
+        <div className="glam-banner">
+          💋 Premios que ganas cumpliendo tus <b>metas semanales de tokens</b>. Llevas{' '}
+          <b>{goalsMet}</b> {goalsMet === 1 ? 'meta cumplida' : 'metas cumplidas'}. ¡Cada meta
+          desbloquea el siguiente!
+        </div>
+      )}
+
       {/* Aviso del Mundial (tiempo limitado) */}
       {tab === 'mundial' && (
         <div className="mundial-banner">
@@ -135,6 +152,7 @@ export default function Shop() {
       <PreviewSheet
         item={preview}
         gamification={gamification}
+        goalsMet={goalsMet}
         month={month}
         onClose={() => setPreview(null)}
         onToggleAccessory={(id) => toggleEquip(id)}
@@ -149,6 +167,7 @@ export default function Shop() {
 function PreviewSheet({
   item,
   gamification,
+  goalsMet,
   month,
   onClose,
   onToggleAccessory,
@@ -157,6 +176,7 @@ function PreviewSheet({
 }: {
   item: ShopItem | null
   gamification: ReturnType<typeof useApp>['gamification']
+  goalsMet: number
   month: number
   onClose: () => void
   onToggleAccessory: (id: string) => void
@@ -165,12 +185,12 @@ function PreviewSheet({
 }) {
   const open = !!item
   const unlocked = item
-    ? FREE_DEFAULTS.includes(item.id) || isUnlocked(item, gamification, month)
+    ? FREE_DEFAULTS.includes(item.id) || isUnlocked(item, gamification, month, undefined, goalsMet)
     : false
   const best = gamification.bestStreak ?? 0
 
   // outfit base = solo lo desbloqueado, + el ítem que se está viendo
-  const base = effectiveLook(gamification, month)
+  const base = effectiveLook(gamification, month, goalsMet)
   const equipped = item
     ? item.kind === 'accessory'
       ? Array.from(new Set([...base.equipped, item.id]))
@@ -222,6 +242,20 @@ function PreviewSheet({
                     : 'Usar este'}
               </button>
             </>
+          ) : item.unlockGoal != null ? (
+            <div className="preview-locked">
+              <p className="screen-sub">👀 Así se le vería… ¡un premio glam!</p>
+              <div className="preview-locked__big">💋</div>
+              <p>
+                Se desbloquea al cumplir <b>{item.unlockGoal}</b>{' '}
+                {item.unlockGoal === 1 ? 'meta semanal' : 'metas semanales'} de tokens 🔥
+              </p>
+              <p className="screen-sub">
+                Llevas <b>{goalsMet}</b> {goalsMet === 1 ? 'meta' : 'metas'}. ¡Te{' '}
+                {item.unlockGoal - goalsMet === 1 ? 'falta' : 'faltan'}{' '}
+                <b>{Math.max(0, item.unlockGoal - goalsMet)}</b>! 💪
+              </p>
+            </div>
           ) : item.event === 'mundial' ? (
             <div className="preview-locked">
               <p className="screen-sub">👀 Así se le vería… ¡ya casi!</p>

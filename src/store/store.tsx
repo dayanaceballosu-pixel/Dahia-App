@@ -20,9 +20,12 @@ import type {
   Movement,
   MovementType,
   Profile,
+  TokenEntry,
+  WorkStats,
 } from '../data/types'
 import { emptySnapshot } from '../data/seed'
 import { FREE_DEFAULTS, isUnlocked, itemById, inSeason, SHOP_ITEMS } from '../data/shop'
+import { lockGoalsMet, goalsMet as computeGoalsMet } from '../data/tokens'
 import { uid } from '../lib/id'
 import { localDayKey, daysBetween } from '../lib/date'
 
@@ -52,6 +55,10 @@ interface AppContextValue {
   categories: Category[]
   movements: Movement[]
   gamification: Gamification
+  tokenEntries: TokenEntry[]
+  workStats: WorkStats
+  /** nº de metas semanales cumplidas (derivado) → desbloquea premios glam */
+  goalsMet: number
 
   // perfil / ajustes
   updateProfile: (patch: Partial<Profile>) => void
@@ -71,6 +78,12 @@ interface AppContextValue {
   addMovement: (input: NewMovementInput) => Movement
   updateMovement: (movement: Movement) => void
   deleteMovement: (id: ID) => void
+
+  // tokens de trabajo + metas
+  addTokenEntry: (data: { date: number; tokens: number; note?: string }) => TokenEntry
+  updateTokenEntry: (entry: TokenEntry) => void
+  deleteTokenEntry: (id: ID) => void
+  setWeeklyGoal: (goal: number) => void
 
   // gamificación (por racha)
   claimDaily: () => ClaimResult
@@ -273,6 +286,74 @@ export function AppProvider({
     [provider],
   )
 
+  /* -------- tokens de trabajo + metas semanales -------- */
+  // Tras cambiar registros, "congela" las semanas recién cumplidas (premio ganado)
+  // sin quitar candados viejos, y persiste workStats si cambió.
+  const reconcileEntries = useCallback(
+    (s: DataSnapshot, tokenEntries: TokenEntry[]): DataSnapshot => {
+      const locked = lockGoalsMet(tokenEntries, s.workStats)
+      if (locked) {
+        const workStats = { ...s.workStats, weekGoals: locked }
+        provider.saveWorkStats(workStats)
+        return { ...s, tokenEntries, workStats }
+      }
+      return { ...s, tokenEntries }
+    },
+    [provider],
+  )
+
+  const addTokenEntry = useCallback(
+    (data: { date: number; tokens: number; note?: string }) => {
+      const entry: TokenEntry = {
+        id: uid('tok'),
+        date: data.date,
+        tokens: Math.abs(Math.round(data.tokens)),
+        note: data.note?.trim() || undefined,
+        createdAt: Date.now(),
+      }
+      setSnap((s) => {
+        provider.upsertTokenEntry(entry)
+        return reconcileEntries(s, [...s.tokenEntries, entry])
+      })
+      return entry
+    },
+    [provider, reconcileEntries],
+  )
+
+  const updateTokenEntry = useCallback(
+    (entry: TokenEntry) => {
+      const clean = { ...entry, tokens: Math.abs(Math.round(entry.tokens)), note: entry.note?.trim() || undefined }
+      setSnap((s) => {
+        provider.upsertTokenEntry(clean)
+        return reconcileEntries(s, s.tokenEntries.map((t) => (t.id === clean.id ? clean : t)))
+      })
+    },
+    [provider, reconcileEntries],
+  )
+
+  const deleteTokenEntry = useCallback(
+    (id: ID) => {
+      setSnap((s) => {
+        provider.removeTokenEntry(id)
+        return { ...s, tokenEntries: s.tokenEntries.filter((t) => t.id !== id) }
+      })
+    },
+    [provider],
+  )
+
+  const setWeeklyGoal = useCallback(
+    (goal: number) => {
+      setSnap((s) => {
+        const base: WorkStats = { ...s.workStats, weeklyGoal: Math.max(0, Math.round(goal)) }
+        const locked = lockGoalsMet(s.tokenEntries, base)
+        const workStats = locked ? { ...base, weekGoals: locked } : base
+        provider.saveWorkStats(workStats)
+        return { ...s, workStats }
+      })
+    },
+    [provider],
+  )
+
   /* -------- racha diaria -------- */
   const claimDaily = useCallback((): ClaimResult => {
     const today = localDayKey()
@@ -328,9 +409,10 @@ export function AppProvider({
       if (FREE_DEFAULTS.includes(id)) return true
       const item = itemById(id)
       if (!item) return false
-      return isUnlocked(item, snap.gamification, new Date().getMonth() + 1)
+      const gm = computeGoalsMet(snap.tokenEntries, snap.workStats)
+      return isUnlocked(item, snap.gamification, new Date().getMonth() + 1, undefined, gm)
     },
-    [snap.gamification],
+    [snap.gamification, snap.tokenEntries, snap.workStats],
   )
 
   const toggleEquip = useCallback(
@@ -374,7 +456,14 @@ export function AppProvider({
       categories: snap.categories,
       movements: snap.movements,
       gamification: snap.gamification,
+      tokenEntries: snap.tokenEntries,
+      workStats: snap.workStats,
+      goalsMet: computeGoalsMet(snap.tokenEntries, snap.workStats),
       updateProfile,
+      addTokenEntry,
+      updateTokenEntry,
+      deleteTokenEntry,
+      setWeeklyGoal,
       addAccount,
       updateAccount,
       archiveAccount,
@@ -396,6 +485,10 @@ export function AppProvider({
       loading,
       snap,
       updateProfile,
+      addTokenEntry,
+      updateTokenEntry,
+      deleteTokenEntry,
+      setWeeklyGoal,
       addAccount,
       updateAccount,
       archiveAccount,
