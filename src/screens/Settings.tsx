@@ -26,10 +26,10 @@ export default function Settings() {
       {/* Accesos */}
       <div className="list">
         <button className="row" onClick={() => navigate('/tienda')} style={{ width: '100%', textAlign: 'left' }}>
-          <span className="row__icon">🛍️</span>
+          <span className="row__icon">🐱</span>
           <span className="row__main">
-            <span className="row__title">Tienda del michi</span>
-            <span className="row__sub">Desbloquea con tu racha 🔥</span>
+            <span className="row__title">Mi Gatito</span>
+            <span className="row__sub">Vístelo, ponle nombre y más 🎀</span>
           </span>
           <span className="streakpill">🔥 <b>{gamification.bestStreak ?? 0}</b></span>
         </button>
@@ -64,20 +64,6 @@ export default function Settings() {
               {t.emoji} {t.label}
             </button>
           ))}
-        </div>
-      </section>
-
-      {/* Gato */}
-      <section className="card stack">
-        <p className="t-label">Tu gatito 🐱</p>
-        <div className="field">
-          <label>Nombre del gato</label>
-          <input
-            className="input"
-            value={profile.catName}
-            onChange={(e) => updateProfile({ catName: e.target.value })}
-            placeholder="Michi"
-          />
         </div>
       </section>
 

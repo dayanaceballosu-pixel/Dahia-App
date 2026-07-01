@@ -30,7 +30,7 @@ const TABS: { kind: TabKey; label: string; emoji: string }[] = [
 const MES = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
 export default function Shop() {
-  const { gamification, goalsMet, toggleEquip, selectSkin, selectBackground } = useApp()
+  const { profile, updateProfile, gamification, goalsMet, toggleEquip, selectSkin, selectBackground } = useApp()
   const navigate = useNavigate()
   const [tab, setTab] = useState<TabKey>('accessory')
   const [preview, setPreview] = useState<ShopItem | null>(null)
@@ -81,8 +81,8 @@ export default function Shop() {
           ‹
         </button>
         <div style={{ flex: 1 }}>
-          <h1>Tienda 🛍️</h1>
-          <p className="screen-sub">Desbloquea entrando cada día 🔥</p>
+          <h1>Mi Gatito 🐱</h1>
+          <p className="screen-sub">Vístelo, ponle nombre y más 🎀</p>
         </div>
         <span className="streakpill" title="Racha máxima">
           🔥 <b>{best}</b>
@@ -94,6 +94,25 @@ export default function Shop() {
         <CatStage background={look.background} size={190}>
           <Cat size={150} equipped={look.equipped} skin={look.skin} alive />
         </CatStage>
+      </div>
+
+      {/* Nombre del gato (editable) */}
+      <div className="cat-name">
+        <input
+          className="cat-name__input"
+          value={profile.catName}
+          onChange={(e) => updateProfile({ catName: e.target.value })}
+          placeholder="Michi"
+          maxLength={20}
+          aria-label="Nombre del gato"
+        />
+        <span className="cat-name__pencil">✏️</span>
+      </div>
+
+      {/* Pilditas: racha y metas glam */}
+      <div className="cat-stats">
+        <span className="cat-stat">🔥 <b>{best}</b> racha</span>
+        <span className="cat-stat">💋 <b>{goalsMet}</b> {goalsMet === 1 ? 'meta' : 'metas'}</span>
       </div>
 
       {/* Pestañas */}
@@ -148,6 +167,16 @@ export default function Shop() {
           ? 'Entra cada día del Mundial y ve completando la colección. ¡Lo que desbloqueas queda tuyo para siempre! ⚽'
           : 'Cada día que entras sube tu racha 🔥 y desbloqueas cosas nuevas para tu michi. ¡Y quedan tuyas para siempre!'}
       </p>
+
+      {/* Teaser: mini-juegos (próximamente) */}
+      <div className="minigames-teaser">
+        <span className="minigames-teaser__ic">🎮</span>
+        <span className="grow">
+          <b>Mini-juegos con tu michi</b>
+          <span className="minigames-teaser__sub">Jugar, darle premios y más 🐾</span>
+        </span>
+        <span className="soon-pill">Pronto ✨</span>
+      </div>
 
       <PreviewSheet
         item={preview}
