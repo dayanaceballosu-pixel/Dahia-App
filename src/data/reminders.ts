@@ -58,3 +58,11 @@ export function sortedReminders(rs: PaymentReminder[]): PaymentReminder[] {
 export function pendingCount(rs: PaymentReminder[], today: string = localDayKey()): number {
   return liveReminders(rs).filter((r) => daysBetween(today, localDayKey(r.nextDate)) <= 0).length
 }
+
+/** Pagos vivos que urge avisar al entrar: atrasados, de hoy y de mañana,
+ *  ordenados del más urgente al menos (fecha más próxima primero). */
+export function duePopupReminders(rs: PaymentReminder[], today: string = localDayKey()): PaymentReminder[] {
+  return liveReminders(rs)
+    .filter((r) => daysBetween(today, localDayKey(r.nextDate)) <= 1)
+    .sort((a, b) => a.nextDate - b.nextDate)
+}

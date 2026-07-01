@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useApp } from '../store/store'
@@ -12,9 +12,14 @@ import { effectiveLook } from '../data/shop'
 import { totalsByCurrency, pendingTransfers, sortedDesc } from '../data/selectors'
 import { accountCurrency } from '../data/types'
 import { weekProgress } from '../data/tokens'
-import { pendingCount } from '../data/reminders'
+import { pendingCount, duePopupReminders } from '../data/reminders'
 import { localDayKey } from '../lib/date'
+import PaymentsDuePopup from '../components/PaymentsDuePopup'
 import './Home.css'
+
+/** Una vez por sesión (se reinicia al recargar la app): que el popup de
+ *  pagos pendientes se asome solo la primera vez que se llega a Inicio. */
+let duePopupShownThisSession = false
 
 export default function Home() {
   const { profile, accounts, movements, gamification, goalsMet, tokenEntries, workStats, reminders, notes, claimDaily, updateProfile } = useApp()
@@ -22,6 +27,7 @@ export default function Home() {
   const navigate = useNavigate()
   const [mood, setMood] = useState<CatMood>('idle')
   const [toast, setToast] = useState<string | null>(null)
+  const [showDuePopup, setShowDuePopup] = useState(false)
 
   const totals = useMemo(() => totalsByCurrency(accounts, movements), [accounts, movements])
   const hasUSD = useMemo(
@@ -31,12 +37,22 @@ export default function Home() {
   const pendings = useMemo(() => pendingTransfers(movements), [movements])
   const tokWeek = useMemo(() => weekProgress(tokenEntries, workStats, 0), [tokenEntries, workStats])
   const remPending = useMemo(() => pendingCount(reminders), [reminders])
+  const dueNow = useMemo(() => duePopupReminders(reminders).length, [reminders])
   const recent = useMemo(() => sortedDesc(movements).slice(0, 4), [movements])
   const look = useMemo(
     () => effectiveLook(gamification, new Date().getMonth() + 1, goalsMet),
     [gamification, goalsMet],
   )
   const claimedToday = gamification.lastClaimDate === localDayKey()
+
+  // Al llegar a Inicio por primera vez en la sesión, si hay pagos atrasados,
+  // de hoy o de mañana, asomamos el popup una sola vez.
+  useEffect(() => {
+    if (!duePopupShownThisSession && dueNow > 0) {
+      duePopupShownThisSession = true
+      setShowDuePopup(true)
+    }
+  }, [dueNow])
 
   function flashToast(msg: string) {
     setToast(msg)
@@ -217,6 +233,8 @@ export default function Home() {
       </section>
 
       {toast && <div className="toast-pop">{toast}</div>}
+
+      <PaymentsDuePopup open={showDuePopup} onClose={() => setShowDuePopup(false)} />
     </main>
   )
 }
