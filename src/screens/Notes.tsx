@@ -209,7 +209,7 @@ function NoteEditor({
 
   return (
     <Sheet open={open} onClose={onClose} title={note ? 'Editar notita' : 'Nueva notita 🎀'}>
-      <div className={`stack note-edit note--${color}`}>
+      <div className="stack">
         <div className="field">
           <label>Título</label>
           <div className="rowflex">
