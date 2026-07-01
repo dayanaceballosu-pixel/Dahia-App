@@ -251,14 +251,14 @@ export default function Cat({
               <ellipse cx="168" cy="170" rx="13" ry="16" fill="#ffcd00" stroke="#e0b400" strokeWidth="1" />
               {/* torso */}
               <path d="M78 152 Q120 146 162 152 L168 196 Q120 216 72 196 Z" fill="#ffcd00" stroke="#e0b400" strokeWidth="1.5" />
-              {/* puños tricolor (dentro de la manga) */}
-              <path d="M65 181 Q72 184 79 181" fill="none" stroke="#003893" strokeWidth="2.4" />
-              <path d="M66 183 Q72 185.5 78 183" fill="none" stroke="#ce1126" strokeWidth="1.7" />
-              <path d="M161 181 Q168 184 175 181" fill="none" stroke="#003893" strokeWidth="2.4" />
-              <path d="M162 183 Q168 185.5 174 183" fill="none" stroke="#ce1126" strokeWidth="1.7" />
-              {/* dobladillo tricolor (dentro de la tela) */}
-              <path d="M84 197 Q120 206 156 197" fill="none" stroke="#003893" strokeWidth="2.6" />
-              <path d="M85 199 Q120 208 155 199" fill="none" stroke="#ce1126" strokeWidth="2" />
+              {/* puños tricolor (banda en el filo de la manga) */}
+              <path d="M63 180 Q72 184 81 180" fill="none" stroke="#003893" strokeWidth="2.4" />
+              <path d="M64 182.5 Q72 185.5 80 182.5" fill="none" stroke="#ce1126" strokeWidth="1.8" />
+              <path d="M159 180 Q168 184 177 180" fill="none" stroke="#003893" strokeWidth="2.4" />
+              <path d="M160 182.5 Q168 185.5 176 182.5" fill="none" stroke="#ce1126" strokeWidth="1.8" />
+              {/* dobladillo tricolor: es el BORDE inferior de la camiseta (rojo al filo) */}
+              <path d="M80 195 Q120 209 160 195" fill="none" stroke="#003893" strokeWidth="2.4" />
+              <path d="M76 198 Q120 213 164 198" fill="none" stroke="#ce1126" strokeWidth="2.4" />
               {/* escudo: banderita de Colombia */}
               <rect x="86" y="177" width="15" height="11" rx="1.8" fill="#ffcd00" stroke="#b98f10" strokeWidth="1" />
               <rect x="86.6" y="182.6" width="13.8" height="2.9" fill="#003893" />
