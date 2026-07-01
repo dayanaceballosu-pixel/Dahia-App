@@ -251,14 +251,14 @@ export default function Cat({
               <ellipse cx="168" cy="170" rx="13" ry="16" fill="#ffcd00" stroke="#e0b400" strokeWidth="1" />
               {/* torso */}
               <path d="M78 152 Q120 146 162 152 L168 196 Q120 216 72 196 Z" fill="#ffcd00" stroke="#e0b400" strokeWidth="1.5" />
-              {/* puños tricolor */}
-              <path d="M60 181 Q72 190 84 181" fill="none" stroke="#003893" strokeWidth="2.6" />
-              <path d="M61 184 Q72 191 83 184" fill="none" stroke="#ce1126" strokeWidth="1.8" />
-              <path d="M156 181 Q168 190 180 181" fill="none" stroke="#003893" strokeWidth="2.6" />
-              <path d="M157 184 Q168 191 179 184" fill="none" stroke="#ce1126" strokeWidth="1.8" />
-              {/* dobladillo tricolor */}
-              <path d="M74 201 Q120 217 166 201" fill="none" stroke="#003893" strokeWidth="2.6" />
-              <path d="M77 205 Q120 219 163 205" fill="none" stroke="#ce1126" strokeWidth="2" />
+              {/* puños tricolor (dentro de la manga) */}
+              <path d="M65 181 Q72 184 79 181" fill="none" stroke="#003893" strokeWidth="2.4" />
+              <path d="M66 183 Q72 185.5 78 183" fill="none" stroke="#ce1126" strokeWidth="1.7" />
+              <path d="M161 181 Q168 184 175 181" fill="none" stroke="#003893" strokeWidth="2.4" />
+              <path d="M162 183 Q168 185.5 174 183" fill="none" stroke="#ce1126" strokeWidth="1.7" />
+              {/* dobladillo tricolor (dentro de la tela) */}
+              <path d="M84 197 Q120 206 156 197" fill="none" stroke="#003893" strokeWidth="2.6" />
+              <path d="M85 199 Q120 208 155 199" fill="none" stroke="#ce1126" strokeWidth="2" />
               {/* escudo: banderita de Colombia */}
               <rect x="86" y="177" width="15" height="11" rx="1.8" fill="#ffcd00" stroke="#b98f10" strokeWidth="1" />
               <rect x="86.6" y="182.6" width="13.8" height="2.9" fill="#003893" />
